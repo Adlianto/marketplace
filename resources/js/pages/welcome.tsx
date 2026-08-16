@@ -195,7 +195,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
     return (
         <div className="min-h-screen flex flex-col bg-white text-slate-800 antialiased font-sans">
-            <Head title="Situs Jual Beli Komponen PC & Laptop Terlengkap | Marketplace" />
+            <Head title="Marketplace" />
 
             <Navbar searchQuery={search} onSearchChange={setSearch} cartCount={cartCount} />
 
