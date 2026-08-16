@@ -5,17 +5,17 @@ export default function Footer() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.3fr_1.3fr_1.2fr_2.4fr] gap-x-10 gap-y-10 items-start">
                     
                     <div>
-                        <h4 className="font-bold text-slate-900 text-[16px] mb-3.5 tracking-tight">Tokopedia</h4>
+                        <h4 className="font-bold text-slate-900 text-[16px] mb-3.5 tracking-tight">Marketplace</h4>
                         <ul className="space-y-2 text-[13px] text-slate-600">
-                            <li><a href="#" className="hover:text-[#03ac0e] transition">Tentang Tokopedia</a></li>
+                            <li><a href="#" className="hover:text-[#03ac0e] transition">Tentang Marketplace</a></li>
                             <li><a href="#" className="hover:text-[#03ac0e] transition">Hak Kekayaan Intelektual</a></li>
                             <li><a href="#" className="hover:text-[#03ac0e] transition">Karir</a></li>
                             <li><a href="#" className="hover:text-[#03ac0e] transition">Blog</a></li>
-                            <li><a href="#" className="hover:text-[#03ac0e] transition">Tokopedia Affiliate Program</a></li>
-                            <li><a href="#" className="hover:text-[#03ac0e] transition">Tokopedia B2B Digital</a></li>
-                            <li><a href="#" className="hover:text-[#03ac0e] transition">Tokopedia Marketing Solutions</a></li>
+                            <li><a href="#" className="hover:text-[#03ac0e] transition">Marketplace Affiliate Program</a></li>
+                            <li><a href="#" className="hover:text-[#03ac0e] transition">Marketplace B2B Digital</a></li>
+                            <li><a href="#" className="hover:text-[#03ac0e] transition">Marketplace Marketing Solutions</a></li>
                             <li><a href="#" className="hover:text-[#03ac0e] transition">Kalkulator Indeks Masa Tubuh</a></li>
-                            <li><a href="#" className="hover:text-[#03ac0e] transition">Tokopedia Farma</a></li>
+                            <li><a href="#" className="hover:text-[#03ac0e] transition">Marketplace Farma</a></li>
                             <li><a href="#" className="hover:text-[#03ac0e] transition">Promo Hari Ini</a></li>
                             <li><a href="#" className="hover:text-[#03ac0e] transition">Beli Lokal</a></li>
                             <li><a href="#" className="hover:text-[#03ac0e] transition">Promo Guncang</a></li>
@@ -27,7 +27,7 @@ export default function Footer() {
                             <h4 className="font-bold text-slate-900 text-[16px] mb-3 tracking-tight">Beli</h4>
                             <ul className="space-y-2 text-[13px] text-slate-600">
                                 <li><a href="#" className="hover:text-[#03ac0e] transition">Tagihan & Top Up</a></li>
-                                <li><a href="#" className="hover:text-[#03ac0e] transition">Tokopedia COD</a></li>
+                                <li><a href="#" className="hover:text-[#03ac0e] transition">Marketplace COD</a></li>
                                 <li><a href="#" className="hover:text-[#03ac0e] transition">Bebas Ongkir</a></li>
                             </ul>
                         </div>
@@ -43,7 +43,7 @@ export default function Footer() {
                         <div>
                             <h4 className="font-bold text-slate-900 text-[16px] mb-3 tracking-tight">Bantuan dan Panduan</h4>
                             <ul className="space-y-2 text-[13px] text-slate-600">
-                                <li><a href="#" className="hover:text-[#03ac0e] transition">Tokopedia Care</a></li>
+                                <li><a href="#" className="hover:text-[#03ac0e] transition">Marketplace Care</a></li>
                                 <li><a href="#" className="hover:text-[#03ac0e] transition">Syarat dan Ketentuan</a></li>
                                 <li><a href="#" className="hover:text-[#03ac0e] transition">Kebijakan Privasi</a></li>
                             </ul>
@@ -100,10 +100,10 @@ export default function Footer() {
                         <div>
                             <h4 className="font-bold text-slate-900 text-[16px] mb-3 tracking-tight">Ikuti Kami</h4>
                             <div className="flex items-center gap-2.5">
-                                <a href="#" className="w-8 h-8 rounded-full bg-[#3b5998] flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">f</a>
-                                <a href="#" className="w-8 h-8 rounded-full bg-[#00acee] flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">𝕏</a>
-                                <a href="#" className="w-8 h-8 rounded-full bg-[#cb2027] flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">p</a>
-                                <a href="#" className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-500 via-red-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">
+                                <a href="#" aria-label="Facebook" className="w-8 h-8 rounded-full bg-[#3b5998] flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">f</a>
+                                <a href="#" aria-label="Twitter X" className="w-8 h-8 rounded-full bg-[#00acee] flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">𝕏</a>
+                                <a href="#" aria-label="Pinterest" className="w-8 h-8 rounded-full bg-[#cb2027] flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">p</a>
+                                <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-500 via-red-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold hover:opacity-90 transition shadow-xs">
                                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                         <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                                         <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
@@ -147,8 +147,12 @@ export default function Footer() {
                             <div className="flex items-center gap-3.5">
                                 <div className="w-[135px] h-[135px] border border-slate-300 rounded-xl p-1.5 bg-white shrink-0 shadow-xs">
                                     <img
-                                        src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://www.tokopedia.com/download-app"
-                                        alt="QR Code Tokopedia"
+                                        src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.tokopedia.com/download-app"
+                                        alt="QR Code Marketplace"
+                                        width={130}
+                                        height={130}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="w-full h-full object-contain"
                                     />
                                 </div>
@@ -157,11 +161,19 @@ export default function Footer() {
                                     <img
                                         src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
                                         alt="Google Play"
+                                        width={135}
+                                        height={40}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="h-10 w-auto cursor-pointer object-contain self-start hover:opacity-90 transition"
                                     />
                                     <img
                                         src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
                                         alt="App Store"
+                                        width={135}
+                                        height={40}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="h-10 w-auto cursor-pointer object-contain self-start hover:opacity-90 transition"
                                     />
                                     <div className="h-10 bg-black rounded-lg flex items-center gap-2 px-3 cursor-pointer w-[135px] hover:opacity-90 transition shadow-xs">
@@ -187,7 +199,7 @@ export default function Footer() {
 
             <div className="border-t border-slate-200 py-5 bg-white">
                 <div className="max-w-[1240px] mx-auto px-4 lg:px-6 text-[13px] text-slate-500">
-                    <p>© 2009 - 2026, PT. Tokopedia. All Rights Reserved.</p>
+                    <p>© 2009 - 2026, PT. Marketplace. All Rights Reserved.</p>
                 </div>
             </div>
         </footer>

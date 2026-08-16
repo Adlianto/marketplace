@@ -1,5 +1,5 @@
 import { Head, router, useRemember } from '@inertiajs/react';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import ProductSkeleton from '@/components/productSkeleton';
@@ -48,7 +48,7 @@ const BANNERS = [
         subtitle: 'RTX 40 Series & Gen 14th Intel Ready Stock',
         bg: 'from-emerald-600 to-teal-800',
         badge: 'PC MASTER RACE',
-        img: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=900&auto=format&fit=crop&q=80',
+        img: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=720&auto=format&fit=crop&q=70',
     },
     {
         id: 2,
@@ -56,7 +56,7 @@ const BANNERS = [
         subtitle: 'Cashback Ekstra s.d Rp2.000.000 Bebas Ongkir',
         bg: 'from-blue-600 to-indigo-800',
         badge: 'LAPTOP DEALS',
-        img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=900&auto=format&fit=crop&q=80',
+        img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=720&auto=format&fit=crop&q=70',
     },
 ];
 
@@ -75,11 +75,23 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
     const [wishlist, setWishlist] = useRemember<number[]>([], 'welcome-wishlist');
     const [cartCount, setCartCount] = useRemember(4, 'welcome-cart-count');
 
+    const [allProducts, setAllProducts] = useState<ProductItem[]>(products?.data || []);
+    const [nextPageUrl, setNextPageUrl] = useState<string | null>(products?.next_page_url || null);
+    const [totalProducts, setTotalProducts] = useState<number>(products?.total || 0);
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     const [visibleCount, setVisibleCount] = useRemember(12, 'welcome-visible-count');
     const [hasAutoScrolled, setHasAutoScrolled] = useRemember(false, 'welcome-autoscroll-flag');
-    const [isLoading, setIsLoading] = useState(false);
     const [isAutoLoading, setIsAutoLoading] = useState(false);
     const triggerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        setAllProducts(products?.data || []);
+        setNextPageUrl(products?.next_page_url || null);
+        setTotalProducts(products?.total || 0);
+    }, [products]);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -89,7 +101,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
     }, []);
 
     useEffect(() => {
-        if (hasAutoScrolled || isLoading) return;
+        if (hasAutoScrolled || isLoading || allProducts.length <= 12) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -99,7 +111,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                         setVisibleCount(18);
                         setHasAutoScrolled(true);
                         setIsAutoLoading(false);
-                    }, 400);
+                    }, 350);
                 }
             },
             { threshold: 0.1 }
@@ -110,7 +122,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
         }
 
         return () => observer.disconnect();
-    }, [hasAutoScrolled, isLoading, products]);
+    }, [hasAutoScrolled, isLoading, allProducts]);
 
     const handleCategoryChange = (slug: string) => {
         setIsLoading(true);
@@ -140,25 +152,50 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
         return () => clearTimeout(timer);
     }, [search]);
 
-    const toggleWishlist = (e: React.MouseEvent, id: number) => {
+    const handleLoadMore = () => {
+        if (!nextPageUrl || isLoadingMore) return;
+
+        setIsLoadingMore(true);
+
+        router.get(
+            nextPageUrl,
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['products'],
+                onSuccess: (page) => {
+                    const newProductsData = (page.props.products as PaginatedData<ProductItem>);
+
+                    setTimeout(() => {
+                        setAllProducts((prev) => [...prev, ...(newProductsData?.data || [])]);
+                        setNextPageUrl(newProductsData?.next_page_url || null);
+                        setVisibleCount((prev) => prev + (newProductsData?.data?.length || 0));
+                        setIsLoadingMore(false);
+                    }, 400);
+                },
+                onError: () => setIsLoadingMore(false)
+            }
+        );
+    };
+
+    const toggleWishlist = useCallback((e: React.MouseEvent, id: number) => {
         e.stopPropagation();
         setWishlist((prev) =>
             prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
         );
-    };
+    }, [setWishlist]);
 
-    const handleAddToCart = (e: React.MouseEvent) => {
+    const handleAddToCart = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         setCartCount((prev) => prev + 1);
-    };
+    }, [setCartCount]);
 
-    const displayedProducts = useMemo(() => {
-        return products.data.slice(0, visibleCount);
-    }, [products.data, visibleCount]);
+    const displayedProducts = allProducts.slice(0, visibleCount);
 
     return (
         <div className="min-h-screen flex flex-col bg-white text-slate-800 antialiased font-sans">
-            <Head title="Situs Jual Beli Komponen PC & Laptop Terlengkap | Tokopedia" />
+            <Head title="Situs Jual Beli Komponen PC & Laptop Terlengkap | Marketplace" />
 
             <Navbar searchQuery={search} onSearchChange={setSearch} cartCount={cartCount} />
 
@@ -168,7 +205,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                     {BANNERS.map((banner, idx) => (
                         <div
                             key={banner.id}
-                            className={`absolute inset-0 transition-opacity duration-700 ease-in-out flex items-center justify-between p-6 sm:p-9 bg-gradient-to-r ${banner.bg} text-white ${activeBanner === idx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                            className={`absolute inset-0 transition-opacity duration-500 ease-out flex items-center justify-between p-6 sm:p-9 bg-gradient-to-r ${banner.bg} text-white ${activeBanner === idx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
                                 }`}
                         >
                             <div className="max-w-md space-y-1.5 z-10">
@@ -190,7 +227,11 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                 <img
                                     src={banner.img}
                                     alt={banner.title}
-                                    loading="lazy"
+                                    width={500}
+                                    height={200}
+                                    loading={idx === 0 ? "eager" : "lazy"}
+                                    fetchPriority={idx === 0 ? "high" : "auto"}
+                                    decoding="async"
                                     className="w-full h-full object-cover rounded-xl shadow-md border border-white/20"
                                 />
                             </div>
@@ -199,6 +240,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
                     <button
                         onClick={() => setActiveBanner((prev) => (prev === 0 ? BANNERS.length - 1 : prev - 1))}
+                        aria-label="Banner Sebelumnya"
                         className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/85 hover:bg-white text-slate-800 flex items-center justify-center shadow-md transition-opacity duration-200 cursor-pointer opacity-0 group-hover:opacity-100"
                     >
                         <svg className="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -208,6 +250,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
                     <button
                         onClick={() => setActiveBanner((prev) => (prev + 1) % BANNERS.length)}
+                        aria-label="Banner Selanjutnya"
                         className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/85 hover:bg-white text-slate-800 flex items-center justify-center shadow-md transition-opacity duration-200 cursor-pointer opacity-0 group-hover:opacity-100"
                     >
                         <svg className="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -250,8 +293,9 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end pt-1">
                                     <div className="space-y-1 sm:col-span-1">
-                                        <label className="text-[11px] font-semibold text-slate-500">Nomor Telepon</label>
+                                        <label htmlFor="phone-input" className="text-[11px] font-semibold text-slate-500">Nomor Telepon</label>
                                         <input
+                                            id="phone-input"
                                             type="text"
                                             value={phoneNumber}
                                             onChange={(e) => setPhoneNumber(e.target.value)}
@@ -261,8 +305,11 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                     </div>
 
                                     <div className="space-y-1 sm:col-span-1">
-                                        <label className="text-[11px] font-semibold text-slate-500">Nominal</label>
-                                        <select className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-700 bg-white focus:outline-none focus:border-[#03ac0e] cursor-pointer">
+                                        <label htmlFor="nominal-select" className="text-[11px] font-semibold text-slate-500">Nominal</label>
+                                        <select
+                                            id="nominal-select"
+                                            className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-700 bg-white focus:outline-none focus:border-[#03ac0e] cursor-pointer"
+                                        >
                                             <option value="">Pilih Nominal</option>
                                             <option value="50000">Rp50.000</option>
                                             <option value="100000">Rp100.000</option>
@@ -280,6 +327,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                     </div>
                 </div>
 
+                {/* PRODUK GRID */}
                 <div className="space-y-3.5 pt-2">
                     <div className="sticky top-16 z-30 bg-white py-2 flex gap-2 overflow-x-auto scrollbar-none border-b border-slate-100">
                         <button
@@ -287,7 +335,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer shadow-xs ${filters.category === 'semua' ? 'bg-[#03ac0e] text-white' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
                                 }`}
                         >
-                            Semua ({products.total || 0})
+                            Semua
                         </button>
                         {categories.map((cat) => (
                             <button
@@ -323,6 +371,8 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                                     <img
                                                         src={item.image}
                                                         alt={item.title}
+                                                        width={200}
+                                                        height={200}
                                                         loading="lazy"
                                                         decoding="async"
                                                         className="w-full h-full object-cover"
@@ -372,6 +422,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                                 <div className="flex items-center gap-1.5">
                                                     <button
                                                         type="button"
+                                                        aria-label="Wishlist"
                                                         onClick={(e) => toggleWishlist(e, item.id)}
                                                         className={`p-1 rounded-md transition cursor-pointer ${isLiked ? 'text-[#ef144a] bg-red-50' : 'text-slate-400 hover:text-[#ef144a] hover:bg-slate-50'
                                                             }`}
@@ -383,6 +434,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
                                                     <button
                                                         type="button"
+                                                        aria-label="Tambah ke keranjang"
                                                         onClick={handleAddToCart}
                                                         className="p-1 text-slate-400 hover:text-[#03ac0e] hover:bg-emerald-50 rounded-md transition cursor-pointer"
                                                     >
@@ -400,6 +452,11 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                     Array.from({ length: 6 }).map((_, idx) => (
                                         <ProductSkeleton key={`auto-${idx}`} />
                                     ))}
+
+                                {isLoadingMore &&
+                                    Array.from({ length: 12 }).map((_, idx) => (
+                                        <ProductSkeleton key={`loadmore-${idx}`} />
+                                    ))}
                             </div>
 
                             {!hasAutoScrolled && <div ref={triggerRef} className="h-10 w-full" />}
@@ -410,13 +467,24 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                         </div>
                     )}
 
-                    {hasAutoScrolled && products.next_page_url && (
+                    {hasAutoScrolled && nextPageUrl && (
                         <div className="pt-4 pb-2 text-center">
                             <button
-                                onClick={() => router.get(products.next_page_url!, {}, { preserveState: true, preserveScroll: true })}
-                                className="px-8 py-2 bg-white border border-[#03ac0e] text-[#03ac0e] font-bold text-xs rounded-lg hover:bg-emerald-50 transition shadow-xs cursor-pointer"
+                                disabled={isLoadingMore}
+                                onClick={handleLoadMore}
+                                className="px-8 py-2.5 bg-white border border-[#03ac0e] text-[#03ac0e] font-bold text-xs rounded-lg hover:bg-emerald-50 transition shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                             >
-                                Muat Lebih Banyak
+                                {isLoadingMore ? (
+                                    <>
+                                        <svg className="animate-spin h-4 w-4 text-[#03ac0e]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Memuat Produk...
+                                    </>
+                                ) : (
+                                    'Muat Lebih Banyak'
+                                )}
                             </button>
                         </div>
                     )}
