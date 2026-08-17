@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -33,12 +37,10 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            
+            $file = $request->file('avatar'); 
             if ($user->avatar && str_starts_with($user->avatar, '/storage/')) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
             }
-
             $extension = $file->getClientOriginalExtension() ?: 'jpg';
             $filename = 'avatar_' . $user->id . '_' . time() . '.' . $extension;
             $path = $file->storeAs('avatars', $filename, 'public');
@@ -47,5 +49,46 @@ class ProfileController extends Controller
         }
 
         return back()->with('status', 'Foto profil berhasil diperbarui!');
+    }
+
+    public function setPassword(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return back()->with('status', 'Kata sandi berhasil dibuat!');
+    }
+
+    public function setPin(Request $request)
+    {
+        $request->validate([
+            'pin' => ['required', 'digits:6', 'confirmed'],
+        ]);
+
+        $request->user()->update([
+            'pin' => Hash::make($request->pin),
+        ]);
+
+        return back()->with('status', 'PIN transaksi berhasil disimpan!');
+    }
+
+    public function show($id)
+    {
+        $product = Product::findOrFail($id);
+
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->take(5)
+            ->get();
+
+        return Inertia::render('product/show', [
+            'product' => $product,
+            'relatedProducts' => $relatedProducts,
+        ]);
     }
 }

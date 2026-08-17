@@ -1,8 +1,10 @@
-import { Head, router, useRemember } from '@inertiajs/react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { Head, Link, router, useRemember } from '@inertiajs/react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import Navbar from '@/components/navbar';
-import Footer from '@/components/footer';
 import ProductSkeleton from '@/components/productSkeleton';
+
+// Lazy load Footer agar tidak membebani loading awal aplikasi
+const Footer = lazy(() => import('@/components/footer'));
 
 interface ProductItem {
     id: number;
@@ -71,7 +73,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
     const [search, setSearch] = useRemember(filters.search || '', 'welcome-search');
     const [activeBanner, setActiveBanner] = useState(0);
     const [activeTopupTab, setActiveTopupTab] = useState('Pulsa');
-    const [phoneNumber, setPhoneNumber] = useState('081234567890');
+    const [phoneNumber, setPhoneNumber] = useState('0123456789');
     const [wishlist, setWishlist] = useRemember<number[]>([], 'welcome-wishlist');
     const [cartCount, setCartCount] = useRemember(4, 'welcome-cart-count');
 
@@ -181,6 +183,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
     const toggleWishlist = useCallback((e: React.MouseEvent, id: number) => {
         e.stopPropagation();
+        e.preventDefault();
         setWishlist((prev) =>
             prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
         );
@@ -188,6 +191,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
     const handleAddToCart = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
+        e.preventDefault();
         setCartCount((prev) => prev + 1);
     }, [setCartCount]);
 
@@ -364,9 +368,9 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                     return (
                                         <div
                                             key={item.id}
-                                            className="group bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition cursor-pointer flex flex-col justify-between"
+                                            className="group bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between"
                                         >
-                                            <div>
+                                            <Link href={`/products/${item.id}`} className="block cursor-pointer flex-1">
                                                 <div className="aspect-square bg-slate-100 overflow-hidden relative">
                                                     <img
                                                         src={item.image}
@@ -375,7 +379,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                                         height={200}
                                                         loading="lazy"
                                                         decoding="async"
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
                                                     />
                                                 </div>
 
@@ -410,7 +414,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
                                                         <span className="truncate">{item.city}</span>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Link>
 
                                             <div className="px-2.5 pb-2.5 pt-1.5 flex items-center justify-between border-t border-slate-100 text-[11px] text-slate-500">
                                                 <div className="flex items-center gap-1">
@@ -492,7 +496,9 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
 
             </main>
 
-            <Footer />
+            <Suspense fallback={<div className="py-10 bg-slate-50 text-center text-slate-400 text-xs">Memuat footer...</div>}>
+                <Footer />
+            </Suspense>
         </div>
     );
 }

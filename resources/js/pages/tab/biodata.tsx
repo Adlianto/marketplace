@@ -1,5 +1,5 @@
 import { useState, useRef, type ReactNode } from 'react';
-import { Camera, Lock, Fingerprint, X } from 'lucide-react';
+import { Camera, Lock, Fingerprint, X, KeyRound, ShieldCheck } from 'lucide-react';
 import { usePage, router } from '@inertiajs/react';
 
 interface UserAuth {
@@ -16,8 +16,13 @@ export default function BiodataTab() {
     const user = auth.user;
 
     const [modal, setModal] = useState({ open: false, type: '', title: '', value: '' });
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [passwordModal, setPasswordModal] = useState(false);
+    const [pinModal, setPinModal] = useState(false);
 
+    const [passwordForm, setPasswordForm] = useState({ password: '', password_confirmation: '' });
+    const [pinForm, setPinForm] = useState({ pin: '', pin_confirmation: '' });
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const userPhoto = user?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'Bell'}`;
 
     const openModal = (type: string, title: string, currentVal?: string) => {
@@ -28,6 +33,42 @@ export default function BiodataTab() {
         router.patch('/profile', { [modal.type]: modal.value }, {
             preserveScroll: true,
             onSuccess: () => setModal({ open: false, type: '', title: '', value: '' }),
+        });
+    };
+
+    const handleSavePassword = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (passwordForm.password !== passwordForm.password_confirmation) {
+            alert('Konfirmasi kata sandi tidak cocok!');
+            return;
+        }
+        router.post('/profile/password', passwordForm, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setPasswordModal(false);
+                setPasswordForm({ password: '', password_confirmation: '' });
+                alert('Kata sandi berhasil disimpan!');
+            },
+        });
+    };
+
+    const handleSavePin = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (pinForm.pin.length !== 6) {
+            alert('PIN harus terdiri dari 6 angka!');
+            return;
+        }
+        if (pinForm.pin !== pinForm.pin_confirmation) {
+            alert('Konfirmasi PIN tidak cocok!');
+            return;
+        }
+        router.post('/profile/pin', pinForm, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setPinModal(false);
+                setPinForm({ pin: '', pin_confirmation: '' });
+                alert('PIN transaksi berhasil diaktifkan!');
+            },
         });
     };
 
@@ -89,9 +130,21 @@ export default function BiodataTab() {
                 </div>
 
                 <div className="space-y-2">
-                    <SecurityButton label="Buat Kata Sandi" />
-                    <SecurityButton label="PIN" icon={<Lock size={13} />} />
-                    <SecurityButton label="Verifikasi Instan" icon={<Fingerprint size={13} />} />
+                    <SecurityButton
+                        label="Buat Kata Sandi"
+                        icon={<KeyRound size={13} />}
+                        onClick={() => setPasswordModal(true)}
+                    />
+                    <SecurityButton
+                        label="PIN Transaksi"
+                        icon={<Lock size={13} />}
+                        onClick={() => setPinModal(true)}
+                    />
+                    <SecurityButton
+                        label="Verifikasi Instan"
+                        icon={<Fingerprint size={13} />}
+                        onClick={() => alert('Fitur Passkey / Biometrik browser terdeteksi aktif!')}
+                    />
                 </div>
             </div>
 
@@ -136,9 +189,6 @@ export default function BiodataTab() {
                                 <span className="bg-green-100 text-green-600 text-[10px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">
                                     Terverifikasi
                                 </span>
-                                <button className="text-green-500 font-bold ml-auto text-xs uppercase hover:underline cursor-pointer">
-                                    Ubah
-                                </button>
                             </div>
                         </div>
                         <div className="flex justify-between items-center text-xs">
@@ -160,7 +210,7 @@ export default function BiodataTab() {
                 </section>
             </div>
 
-            {/* Modal */}
+            {/* Modal Ubah Biodata */}
             {modal.open && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
                     <div className="bg-white w-full max-w-[420px] rounded-lg shadow-xl p-6 relative">
@@ -174,12 +224,6 @@ export default function BiodataTab() {
                         <h2 className="text-base font-bold text-gray-800 mb-4">{modal.title}</h2>
 
                         <div className="space-y-3.5">
-                            <p className="text-xs text-gray-500 leading-relaxed font-medium">
-                                {modal.type === 'name'
-                                    ? 'Kamu hanya dapat mengubah nama 1 kali lagi. Pastikan nama sudah benar.'
-                                    : 'Pastikan data yang kamu masukkan sudah sesuai dengan identitas aslimu.'}
-                            </p>
-
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                     {modal.title.split(' ').slice(1).join(' ')}
@@ -222,6 +266,119 @@ export default function BiodataTab() {
                     </div>
                 </div>
             )}
+
+            {/* Modal Buat Kata Sandi */}
+            {passwordModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-[420px] rounded-lg shadow-xl p-6 relative">
+                        <button
+                            type="button"
+                            onClick={() => setPasswordModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        >
+                            <X size={20} />
+                        </button>
+                        <h2 className="text-base font-bold text-gray-800 mb-1">Buat Kata Sandi</h2>
+                        <p className="text-xs text-gray-500 mb-4">Gunakan kombinasi minimal 8 karakter untuk keamanan akun.</p>
+
+                        <form onSubmit={handleSavePassword} className="space-y-3.5">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                    Kata Sandi Baru
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    minLength={8}
+                                    value={passwordForm.password}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-xs outline-none focus:border-green-500"
+                                    placeholder="Minimal 8 karakter"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                    Ulangi Kata Sandi
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={passwordForm.password_confirmation}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-xs outline-none focus:border-green-500"
+                                    placeholder="Ketik ulang kata sandi"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="w-full py-2.5 bg-green-500 text-white rounded-md font-bold uppercase text-xs tracking-wider mt-4 hover:bg-green-600 cursor-pointer shadow-xs transition"
+                            >
+                                Simpan Kata Sandi
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal PIN Transaksi */}
+            {pinModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-[420px] rounded-lg shadow-xl p-6 relative">
+                        <button
+                            type="button"
+                            onClick={() => setPinModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        >
+                            <X size={20} />
+                        </button>
+                        <h2 className="text-base font-bold text-gray-800 mb-1">Atur PIN 6 Digit</h2>
+                        <p className="text-xs text-gray-500 mb-4">PIN digunakan untuk mengamankan pembayaran & transaksi saldo.</p>
+
+                        <form onSubmit={handleSavePin} className="space-y-3.5">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                    PIN Baru (6 Angka)
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    maxLength={6}
+                                    pattern="\d{6}"
+                                    value={pinForm.pin}
+                                    onChange={(e) => setPinForm({ ...pinForm, pin: e.target.value.replace(/\D/g, '') })}
+                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-center text-lg tracking-[0.4em] font-mono font-bold outline-none focus:border-green-500"
+                                    placeholder="••••••"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                    Konfirmasi PIN
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    maxLength={6}
+                                    pattern="\d{6}"
+                                    value={pinForm.pin_confirmation}
+                                    onChange={(e) => setPinForm({ ...pinForm, pin_confirmation: e.target.value.replace(/\D/g, '') })}
+                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-center text-lg tracking-[0.4em] font-mono font-bold outline-none focus:border-green-500"
+                                    placeholder="••••••"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="w-full py-2.5 bg-green-500 text-white rounded-md font-bold uppercase text-xs tracking-wider mt-4 hover:bg-green-600 cursor-pointer shadow-xs transition"
+                            >
+                                Aktifkan PIN
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -261,10 +418,11 @@ function InfoRow({
     );
 }
 
-function SecurityButton({ label, icon }: { label: string; icon?: ReactNode }) {
+function SecurityButton({ label, icon, onClick }: { label: string; icon?: ReactNode; onClick?: () => void }) {
     return (
         <button
             type="button"
+            onClick={onClick}
             className="w-full flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
         >
             {icon} {label}

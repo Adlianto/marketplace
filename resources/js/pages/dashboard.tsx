@@ -4,13 +4,15 @@ import { CheckCircle2, LogOut, ChevronDown } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 
-import BiodataTab from './tab/biodata';
-import AlamatTab from './tab/tambahAlamat';
-import PembayaranTab from './tab/pembayaran';
-import RekeningTab from './tab/rekeningBank';
-import NotifikasiTab from './tab/notifikasi';
-import TampilanTab from './tab/personalisasi';
-import KeamananTab from './tab/keamanan';
+import { lazy, Suspense } from 'react';
+
+const BiodataTab = lazy(() => import('./tab/biodata'));
+const AlamatTab = lazy(() => import('./tab/tambahAlamat'));
+const PembayaranTab = lazy(() => import('./tab/pembayaran'));
+const RekeningTab = lazy(() => import('./tab/rekeningBank'));
+const NotifikasiTab = lazy(() => import('./tab/notifikasi'));
+const TampilanTab = lazy(() => import('./tab/personalisasi'));
+const KeamananTab = lazy(() => import('./tab/keamanan'));
 
 interface UserAuth {
   id: number;
