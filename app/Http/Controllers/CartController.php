@@ -19,23 +19,6 @@ class CartController extends Controller
             ->latest()
             ->get();
 
-        if ($carts->isEmpty()) {
-            $sampleProducts = Product::take(3)->get();
-            foreach ($sampleProducts as $p) {
-                Cart::create([
-                    'user_id' => $userId,
-                    'product_id' => $p->id,
-                    'quantity' => 1,
-                    'selected' => true,
-                ]);
-            }
-            $carts = Cart::with('product')
-                ->when($userId, fn($q) => $q->where('user_id', $userId))
-                ->latest()
-                ->get();
-        }
-
-        // Format data cart
         $cartItems = $carts->map(function ($cart) {
             return [
                 'id' => $cart->id,

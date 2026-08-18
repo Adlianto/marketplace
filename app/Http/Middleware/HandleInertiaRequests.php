@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Cart;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Illuminate\Support\Facades\Auth;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -35,19 +37,37 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $userId = Auth::id();
+        $cartCount = 0;
+        $cartPreview = [];
+
+        try {
+            $cartQuery = Cart::with('product')
+                ->when($userId, fn($q) => $q->where('user_id', $userId))
+                ->latest();
+
+            $cartCount = (clone $cartQuery)->count();
+
+            $cartPreview = (clone $cartQuery)->take(3)->get()->map(function ($cart) {
+                return [
+                    'id' => $cart->id,
+                    'title' => $cart->product->title ?? 'Produk',
+                    'price' => (float) ($cart->product->price ?? 0),
+                    'image' => $cart->product->image ?? '',
+                ];
+            })->toArray();
+        } catch (\Throwable $e) {
+
+        }
+
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'avatar' => $request->user()->avatar,
-                    'phone' => $request->user()->phone,
-                    'birthday' => $request->user()->birthday,
-                    'gender' => $request->user()->gender,
-                ] : null,
+                'user' => $request->user(),
+            ],
+            'cart' => [
+                'count' => (int) $cartCount,
+                'preview' => $cartPreview,
             ],
         ];
     }

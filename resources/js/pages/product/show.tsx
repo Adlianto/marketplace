@@ -24,7 +24,6 @@ import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import ProductSkeleton from '@/components/productSkeleton';
 
-// Tipe data untuk ulasan pembeli
 interface Review {
     id: number;
     user_name: string;
@@ -34,14 +33,12 @@ interface Review {
     created_at: string;
 }
 
-// Tipe data untuk spesifikasi teknis produk
 interface Specification {
     id: number;
     name: string;
     value: string;
 }
 
-// Tipe data utama item produk
 interface ProductItem {
     id: number;
     title: string;
@@ -62,13 +59,11 @@ interface ProductItem {
     reviews?: Review[];
 }
 
-// Props yang diterima dari Inertia controller
 interface ProductShowProps {
     product: ProductItem;
     relatedProducts: ProductItem[];
 }
 
-// Komponen pembungkus lazy loading section
 function LazySection({ children, minHeight = '400px' }: { children: ReactNode; minHeight?: string }) {
     const [isVisible, setIsVisible] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -98,22 +93,18 @@ function LazySection({ children, minHeight = '400px' }: { children: ReactNode; m
 export default function ProductShow({ product, relatedProducts }: ProductShowProps) {
     const productImage = product?.image || 'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80';
     
-    // State manajemen gambar dan modal preview
     const [activeImage, setActiveImage] = useState(productImage);
     const [modalData, setModalData] = useState<{ images: string[]; index: number } | null>(null);
 
-    // State transaksi
     const [quantity, setQuantity] = useState(1);
     const [isWishlist, setIsWishlist] = useState(false);
     const [activeTab, setActiveTab] = useState<'detail' | 'spesifikasi'>('detail');
     const [isCopiedMain, setIsCopiedMain] = useState(false);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-    // State menu titik tiga untuk rekomendasi
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [copiedId, setCopiedId] = useState<number | null>(null);
 
-    // State progressive loading rekomendasi
     const [visibleRelated, setVisibleRelated] = useState(6);
     const [isLoadingRelated, setIsLoadingRelated] = useState(false);
     
@@ -192,7 +183,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         else if (type === 'dec' && quantity > 1) setQuantity(quantity - 1);
     };
 
-    // Fungsi tambah produk utama ke keranjang belanja di database
     const handleAddMainToCart = () => {
         setIsAddingToCart(true);
         router.post('/cart', {
@@ -206,14 +196,12 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         });
     };
 
-    // Fungsi salin link produk utama
     const handleShareMain = () => {
         navigator.clipboard.writeText(window.location.href);
         setIsCopiedMain(true);
         setTimeout(() => setIsCopiedMain(false), 1500);
     };
 
-    // Fungsi tambah ke keranjang dari popover rekomendasi
     const handleAddToCartItem = (e: React.MouseEvent, productId: number) => {
         e.stopPropagation();
         e.preventDefault();
@@ -228,7 +216,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         setOpenMenuId(null);
     };
 
-    // Fungsi salin link produk rekomendasi
     const handleShareItem = (e: React.MouseEvent, productId: number) => {
         e.stopPropagation();
         e.preventDefault();

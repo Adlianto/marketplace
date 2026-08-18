@@ -14,6 +14,7 @@ Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
 Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/toggle-all', [CartController::class, 'toggleAll'])->name('cart.toggleAll');
 Route::delete('/cart/selected', [CartController::class, 'destroySelected'])->name('cart.destroySelected');
+Route::delete('/cart/selected/delete', [App\Http\Controllers\CartController::class, 'destroySelected'])->name('cart.destroySelected');
 Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');

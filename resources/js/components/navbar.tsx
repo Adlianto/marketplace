@@ -46,40 +46,27 @@ const formatRupiah = (val: number | string) => {
 export default function Navbar({
     searchQuery = '',
     onSearchChange,
-    cartCount = 4,
-    cartItemsPreview,
-    notificationCount = 18,
-    messageCount = 1,
+    cartCount: propCartCount,
+    cartItemsPreview: propCartPreview,
+    notificationCount = 0,
+    messageCount = 0,
     shopLogo,
 }: NavbarProps) {
-    const { auth } = usePage().props as {
-        auth: { user: { name: string; avatar?: string; email?: string } | null };
-    };
+    const page = usePage();
+    const pageProps = (page && page.props) ? page.props as any : {};
+    
+    // Proteksi data cart agar selalu berupa array/angka valid
+    const sharedCartCount = Number(pageProps?.cart?.count) || 0;
+    const sharedCartPreview: CartPreviewItem[] = Array.isArray(pageProps?.cart?.preview) ? pageProps.cart.preview : [];
 
-    const [localQuery, setLocalQuery] = useState(searchQuery);
+    const activeCartCount = propCartCount !== undefined ? propCartCount : sharedCartCount;
+    const activeCartPreview = Array.isArray(propCartPreview) && propCartPreview.length > 0 
+        ? propCartPreview 
+        : sharedCartPreview;
+
+    const auth = pageProps?.auth || { user: null };
+    const [localQuery, setLocalQuery] = useState(searchQuery || '');
     const defaultAvatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${auth.user?.name || 'Bell'}`;
-
-    // Dummy preview 3 item teratas jika belum dilewatkan dari props
-    const previewList: CartPreviewItem[] = cartItemsPreview || [
-        {
-            id: 1,
-            title: 'ASUS ROG GeForce RTX 4090 24GB Special Edition',
-            price: 38104000,
-            image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=200&auto=format&fit=crop&q=60',
-        },
-        {
-            id: 2,
-            title: 'Intel Core i9 14900K 24-Core Processor',
-            price: 9450000,
-            image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=200&auto=format&fit=crop&q=60',
-        },
-        {
-            id: 3,
-            title: 'Corsair 1000W 80+ Gold Fully Modular PSU',
-            price: 3200000,
-            image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=200&auto=format&fit=crop&q=60',
-        },
-    ];
 
     const handleInputChange = (val: string) => {
         setLocalQuery(val);
@@ -105,7 +92,7 @@ export default function Navbar({
                             </span>
 
                             <div className="absolute top-full left-0 pt-2 hidden group-hover:block z-50">
-                                <div className="w-[580px] bg-white border border-slate-200 rounded-xl shadow-xl p-5">
+                                <div className="w-[580px] bg-white border border-slate-200 rounded-md shadow-xl p-5">
                                     <div className="grid grid-cols-3 gap-6 text-xs">
                                         <div>
                                             <h4 className="font-bold text-slate-900 mb-3 text-sm">Laptop</h4>
@@ -177,7 +164,7 @@ export default function Navbar({
                                 placeholder="Search..."
                                 value={localQuery}
                                 onChange={(e) => handleInputChange(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#03ac0e] focus:ring-1 focus:ring-[#03ac0e] transition"
+                                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-md bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#03ac0e] focus:ring-1 focus:ring-[#03ac0e] transition"
                             />
                         </div>
                     </div>
@@ -185,7 +172,7 @@ export default function Navbar({
                     {/* Right Navigation */}
                     <div className="flex items-center gap-1 sm:gap-3 shrink-0 h-full">
                         
-                        {/* Cart Dropdown dengan Preview 3 Item */}
+                        {/* Cart Dropdown */}
                         <div className="relative group h-full flex items-center px-1.5">
                             <Link
                                 href="/cart"
@@ -193,19 +180,19 @@ export default function Navbar({
                                 title="Keranjang"
                             >
                                 <ShoppingCart size={21} />
-                                {cartCount > 0 && (
+                                {activeCartCount > 0 && (
                                     <span className="absolute top-3.5 -right-2 bg-[#ef144a] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center border-2 border-white">
-                                        {cartCount}
+                                        {activeCartCount}
                                     </span>
                                 )}
                             </Link>
 
                             {/* Dropdown Hover Cart */}
                             <div className="absolute top-full -right-16 pt-2 hidden lg:group-hover:block z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                                <div className="w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl p-4 space-y-3">
+                                <div className="w-[340px] bg-white border border-slate-200 rounded-md shadow-xl p-4 space-y-3">
                                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                                         <h4 className="font-bold text-slate-900 text-xs">
-                                            Keranjang ({cartCount})
+                                            Keranjang ({activeCartCount})
                                         </h4>
                                         <Link 
                                             href="/cart" 
@@ -215,13 +202,13 @@ export default function Navbar({
                                         </Link>
                                     </div>
 
-                                    {cartCount > 0 ? (
+                                    {activeCartCount > 0 && activeCartPreview.length > 0 ? (
                                         <div className="divide-y divide-slate-100 max-h-[220px] overflow-y-auto">
-                                            {previewList.slice(0, 3).map((item) => (
+                                            {activeCartPreview.slice(0, 3).map((item: CartPreviewItem) => (
                                                 <Link
                                                     key={item.id}
                                                     href="/cart"
-                                                    className="flex items-center gap-3 py-2 hover:bg-slate-50 rounded-lg px-1 transition group/item"
+                                                    className="flex items-center gap-3 py-2 hover:bg-slate-50 rounded-md px-1 transition group/item"
                                                 >
                                                     <img
                                                         src={item.image}
@@ -245,7 +232,7 @@ export default function Navbar({
 
                                     <Link
                                         href="/cart"
-                                        className="block w-full py-2 bg-[#03ac0e] text-white text-center text-xs font-bold rounded-lg hover:bg-[#029b0c] transition shadow-xs"
+                                        className="block w-full py-2 bg-[#03ac0e] text-white text-center text-xs font-bold rounded-md hover:bg-[#029b0c] transition shadow-xs"
                                     >
                                         Buka Keranjang
                                     </Link>
@@ -301,7 +288,7 @@ export default function Navbar({
                             </div>
 
                             <div className="absolute top-full -right-6 pt-2 hidden group-hover:block z-50">
-                                <div className="w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-4 text-center">
+                                <div className="w-64 bg-white border border-slate-200 shadow-xl rounded-md p-4 text-center">
                                     <p className="text-xs text-slate-600 mb-3">Anda belum memiliki toko.</p>
                                     <button className="w-full bg-[#03ac0e] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#029b0c] transition cursor-pointer shadow-xs">
                                         Buka Toko Gratis
@@ -333,9 +320,8 @@ export default function Navbar({
                                         <span className="truncate max-w-[90px]">{auth.user.name || 'Bell'}</span>
                                     </Link>
 
-                                    {/* Dropdown Profil */}
                                     <div className="absolute top-full right-0 pt-2 hidden group-hover:block z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                                        <div className="w-[390px] bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden">
+                                        <div className="w-[390px] bg-white border border-slate-200 shadow-xl rounded-md overflow-hidden">
                                             <Link
                                                 href={dashboard()}
                                                 className="flex items-center gap-3 p-3.5 m-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100/80 transition"
@@ -434,7 +420,7 @@ export default function Navbar({
                                         href={login()}
                                         preserveState
                                         preserveScroll
-                                        className="px-4 py-1.5 rounded-lg text-xs font-bold text-[#03ac0e] border border-[#03ac0e] hover:bg-emerald-50 transition"
+                                        className="px-4 py-1.5 rounded-md text-xs font-bold text-[#03ac0e] border border-[#03ac0e] hover:bg-emerald-50 transition"
                                     >
                                         Masuk
                                     </Link>
@@ -442,7 +428,7 @@ export default function Navbar({
                                         href={register()}
                                         preserveState
                                         preserveScroll
-                                        className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#03ac0e] text-white border border-[#03ac0e] hover:bg-[#029b0c] transition shadow-xs"
+                                        className="px-4 py-1.5 rounded-md text-xs font-bold bg-[#03ac0e] text-white border border-[#03ac0e] hover:bg-[#029b0c] transition shadow-xs"
                                     >
                                         Daftar
                                     </Link>
