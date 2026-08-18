@@ -26,4 +26,9 @@ class Product extends Model
     {
         return $this->hasMany(ProductReview::class)->latest();
     }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
+    }
 }

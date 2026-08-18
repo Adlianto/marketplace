@@ -17,12 +17,14 @@ import {
     ChevronDown,
     X,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    MoreHorizontal
 } from 'lucide-react';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import ProductSkeleton from '@/components/productSkeleton';
 
+// Tipe data untuk ulasan pembeli
 interface Review {
     id: number;
     user_name: string;
@@ -32,17 +34,22 @@ interface Review {
     created_at: string;
 }
 
+// Tipe data untuk spesifikasi teknis produk
 interface Specification {
     id: number;
     name: string;
     value: string;
 }
 
+// Tipe data utama item produk
 interface ProductItem {
     id: number;
     title: string;
     slug?: string;
     price: number;
+    original_price?: number | null;
+    discount?: number | null;
+    city?: string;
     description?: string;
     image?: string;
     stock?: number;
@@ -55,11 +62,13 @@ interface ProductItem {
     reviews?: Review[];
 }
 
+// Props yang diterima dari Inertia controller
 interface ProductShowProps {
     product: ProductItem;
     relatedProducts: ProductItem[];
 }
 
+// Komponen pembungkus lazy loading section
 function LazySection({ children, minHeight = '400px' }: { children: ReactNode; minHeight?: string }) {
     const [isVisible, setIsVisible] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -89,13 +98,22 @@ function LazySection({ children, minHeight = '400px' }: { children: ReactNode; m
 export default function ProductShow({ product, relatedProducts }: ProductShowProps) {
     const productImage = product?.image || 'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80';
     
+    // State manajemen gambar dan modal preview
     const [activeImage, setActiveImage] = useState(productImage);
     const [modalData, setModalData] = useState<{ images: string[]; index: number } | null>(null);
 
+    // State transaksi
     const [quantity, setQuantity] = useState(1);
     const [isWishlist, setIsWishlist] = useState(false);
     const [activeTab, setActiveTab] = useState<'detail' | 'spesifikasi'>('detail');
+    const [isCopiedMain, setIsCopiedMain] = useState(false);
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
 
+    // State menu titik tiga untuk rekomendasi
+    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const [copiedId, setCopiedId] = useState<number | null>(null);
+
+    // State progressive loading rekomendasi
     const [visibleRelated, setVisibleRelated] = useState(6);
     const [isLoadingRelated, setIsLoadingRelated] = useState(false);
     
@@ -116,6 +134,12 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         
         if (node) observer.current.observe(node);
     }, [isLoadingRelated, visibleRelated, relatedProducts]);
+
+    useEffect(() => {
+        const handleClickOutside = () => setOpenMenuId(null);
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         setActiveImage(product?.image || 'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80');
@@ -168,6 +192,55 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         else if (type === 'dec' && quantity > 1) setQuantity(quantity - 1);
     };
 
+    // Fungsi tambah produk utama ke keranjang belanja di database
+    const handleAddMainToCart = () => {
+        setIsAddingToCart(true);
+        router.post('/cart', {
+            product_id: product.id,
+            quantity: quantity
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+            showProgress: false,
+            onFinish: () => setIsAddingToCart(false)
+        });
+    };
+
+    // Fungsi salin link produk utama
+    const handleShareMain = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setIsCopiedMain(true);
+        setTimeout(() => setIsCopiedMain(false), 1500);
+    };
+
+    // Fungsi tambah ke keranjang dari popover rekomendasi
+    const handleAddToCartItem = (e: React.MouseEvent, productId: number) => {
+        e.stopPropagation();
+        e.preventDefault();
+        router.post('/cart', {
+            product_id: productId,
+            quantity: 1
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+            showProgress: false
+        });
+        setOpenMenuId(null);
+    };
+
+    // Fungsi salin link produk rekomendasi
+    const handleShareItem = (e: React.MouseEvent, productId: number) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const productUrl = `${window.location.origin}/products/${productId}`;
+        navigator.clipboard.writeText(productUrl);
+        setCopiedId(productId);
+        setTimeout(() => {
+            setCopiedId(null);
+            setOpenMenuId(null);
+        }, 1200);
+    };
+
     const reviewPhotos = [
         'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=800&auto=format&fit=crop&q=80',
         'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=800&auto=format&fit=crop&q=80',
@@ -187,6 +260,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         <div className="min-h-screen flex flex-col bg-white text-slate-800 font-sans antialiased relative">
             <Head title={product?.title || 'Detail Produk'} />
 
+            {/* Modal preview gambar penuh */}
             {modalData && (
                 <div 
                     className="fixed inset-0 z-[100] h-screen w-screen bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 select-none"
@@ -252,9 +326,11 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
             <main className="flex-1 max-w-[1240px] w-full mx-auto px-4 py-6">
                 <div className="flex flex-col lg:flex-row gap-8 items-start">
                     
+                    {/* Area informasi produk */}
                     <div className="flex-1 w-full space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-9 gap-8">
                             
+                            {/* Galeri gambar dan thumbnail */}
                             <div className="md:col-span-4 space-y-4">
                                 <div 
                                     className="aspect-square rounded-xl border border-slate-200 overflow-hidden bg-slate-50 relative flex items-center justify-center cursor-zoom-in group"
@@ -285,6 +361,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                 </div>
                             </div>
 
+                            {/* Ringkasan harga dan tab spesifikasi */}
                             <div className="md:col-span-5 space-y-5">
                                 <div>
                                     <h1 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
@@ -334,7 +411,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             </div>
                         </div>
 
-                        {/* Bagian ulasan dan penilaian pembeli */}
+                        {/* Bagian ulasan pembeli */}
                         <div id="ulasan" className="pt-8 border-t border-slate-200 scroll-mt-24">
                             <LazySection minHeight="500px">
                                 <h2 className="text-base font-extrabold text-slate-900 mb-6 uppercase tracking-wider">Ulasan Pembeli</h2>
@@ -377,7 +454,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                         </div>
                                     </div>
 
-                                    {/* Galeri media dan ulasan */}
                                     <div className="md:col-span-8 space-y-8">
                                         <div>
                                             <h3 className="text-xs font-bold text-slate-800 mb-3 uppercase tracking-wider">Foto & Video Pembeli</h3>
@@ -459,7 +535,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                         </div>
                     </div>
 
-                    {/* Panel transaksi */}
+                    {/* Panel samping untuk transaksi (Sticky) */}
                     <div className="w-full lg:w-[320px] shrink-0 sticky top-24 z-10">
                         <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-sm space-y-5">
                             <h3 className="font-bold text-[13px] text-slate-900">Atur jumlah dan catatan</h3>
@@ -489,12 +565,21 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             </div>
 
                             <div className="space-y-2.5 pt-2">
-                                <button className="w-full py-2.5 bg-[#03ac0e] text-white rounded-lg text-[13px] font-extrabold hover:bg-[#029b0c] transition cursor-pointer shadow-sm flex items-center justify-center gap-2">
-                                    <Plus size={16} strokeWidth={3} /> Keranjang
+                                {/* Tombol Tambah ke Keranjang Database */}
+                                <button 
+                                    onClick={handleAddMainToCart}
+                                    disabled={isAddingToCart}
+                                    className="w-full py-2.5 bg-[#03ac0e] text-white rounded-lg text-[13px] font-extrabold hover:bg-[#029b0c] transition cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    <Plus size={16} strokeWidth={3} /> {isAddingToCart ? 'Menambahkan...' : 'Keranjang'}
                                 </button>
-                                <button className="w-full py-2.5 border border-[#03ac0e] text-[#03ac0e] rounded-lg text-[13px] font-extrabold hover:bg-emerald-50 transition cursor-pointer">
+                                <Link 
+                                    href="/cart"
+                                    onClick={handleAddMainToCart}
+                                    className="w-full py-2.5 border border-[#03ac0e] text-[#03ac0e] rounded-lg text-[13px] font-extrabold hover:bg-emerald-50 transition cursor-pointer flex items-center justify-center"
+                                >
                                     Beli Langsung
-                                </button>
+                                </Link>
                             </div>
 
                             <div className="pt-2 flex items-center justify-between text-[13px] font-bold text-slate-600 border-t border-slate-100">
@@ -506,8 +591,14 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                     <Heart size={16} className={isWishlist ? 'fill-current' : ''} /> Wishlist
                                 </button>
                                 <div className="w-px h-4 bg-slate-200"></div>
-                                <button className="flex items-center gap-1.5 hover:text-[#03ac0e] cursor-pointer py-2 transition">
-                                    <Share2 size={16} /> Share
+                                
+                                {/* Tombol Share Produk */}
+                                <button 
+                                    onClick={handleShareMain} 
+                                    className={`flex items-center gap-1.5 cursor-pointer py-2 transition ${isCopiedMain ? 'text-[#03ac0e]' : 'hover:text-[#03ac0e]'}`}
+                                >
+                                    {isCopiedMain ? <Check size={16} /> : <Share2 size={16} />}
+                                    {isCopiedMain ? 'Tersalin!' : 'Share'}
                                 </button>
                             </div>
                         </div>
@@ -515,55 +606,138 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
 
                 </div>
 
-                {/* Bagian rekomendasi */}
+                {/* Bagian rekomendasi produk di toko ini dengan menu titik tiga */}
                 <div id="rekomendasi" className="mt-16 pt-8 border-t border-slate-200 scroll-mt-24">
                     <LazySection minHeight="400px">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-base font-extrabold text-slate-900">Lainnya di toko ini</h2>
-                            <Link href="#" className="text-[13px] font-bold text-[#03ac0e] hover:underline">Lihat Semua</Link>
+                            <Link href="/" className="text-[13px] font-bold text-[#03ac0e] hover:underline">Lihat Semua</Link>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                            {(relatedProducts && relatedProducts.length > 0 ? relatedProducts : []).slice(0, visibleRelated).map((rel: any, idx) => (
-                                <Link
-                                    key={rel?.id || idx}
-                                    href={rel?.id ? `/products/${rel.id}` : '#'}
-                                    className="group bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between"
-                                >
-                                    <div className="aspect-square bg-slate-50 overflow-hidden relative">
-                                        <img
-                                            src={rel?.image || `https://images.unsplash.com/photo-1591488320449-011701bb6704?w=400&q=80&sig=${idx}`}
-                                            alt={rel?.title || "Processor AMD"}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
-                                        />
-                                        {rel?.discount && (
-                                            <div className="absolute top-0 left-0 bg-[#ef144a] text-white text-[10px] font-black px-1.5 py-0.5 rounded-br-lg">
-                                                {rel.discount}%
+                            {(relatedProducts && relatedProducts.length > 0 ? relatedProducts : []).slice(0, visibleRelated).map((rel: any, idx) => {
+                                const isMenuOpen = openMenuId === rel.id;
+                                const isCopied = copiedId === rel.id;
+
+                                return (
+                                    <div
+                                        key={rel?.id || idx}
+                                        className="group bg-white rounded-lg border border-slate-200 overflow-visible shadow-xs hover:shadow-md transition flex flex-col justify-between relative"
+                                    >
+                                        <Link
+                                            href={`/products/${rel.id}`}
+                                            className="block cursor-pointer flex-1 flex flex-col justify-between"
+                                        >
+                                            <div className="aspect-square bg-slate-50 overflow-hidden relative rounded-t-lg">
+                                                <img
+                                                    src={rel?.image || `https://images.unsplash.com/photo-1591488320449-011701bb6704?w=400&q=80&sig=${idx}`}
+                                                    alt={rel?.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                {rel?.discount && (
+                                                    <div className="absolute top-0 left-0 bg-[#ef144a] text-white text-[10px] font-black px-1.5 py-0.5 rounded-br-lg">
+                                                        {rel.discount}%
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                    <div className="p-2.5 flex flex-col flex-1 justify-between">
-                                        <p className="text-xs text-slate-800 line-clamp-2 leading-tight group-hover:text-[#03ac0e] mb-1">
-                                            {rel?.title}
-                                        </p>
-                                        <div>
-                                            <p className="text-[13px] font-extrabold text-slate-900">
-                                                {formatRupiah(rel?.price)}
-                                            </p>
-                                            {rel?.original_price && (
-                                                <p className="text-[10px] text-slate-400 line-through">
-                                                    {formatRupiah(rel.original_price)}
-                                                </p>
-                                            )}
-                                            <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-500">
-                                                <Star size={10} className="fill-amber-400 text-amber-400" />
-                                                <span className="font-bold">{rel?.rating || '5.0'}</span>
-                                                <span className="truncate">• Terjual {rel?.sold_count || '10+'}</span>
+                                            <div className="p-2.5 flex-1 flex flex-col justify-between space-y-1">
+                                                <h3 className="text-xs text-slate-800 line-clamp-2 leading-4 h-[32px]">
+                                                    {rel?.title}
+                                                </h3>
+                                                <div>
+                                                    <p className="text-[13px] font-extrabold text-slate-900 leading-tight">
+                                                        {formatRupiah(rel?.price)}
+                                                    </p>
+                                                    <div className="h-4 flex items-center">
+                                                        {rel?.discount && rel?.original_price ? (
+                                                            <span className="text-[10px] text-slate-400 line-through">
+                                                                {formatRupiah(rel.original_price)}
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+
+                                                <div className="h-4 flex items-center">
+                                                    <span className="text-[10px] font-bold text-[#f26522]">
+                                                        Hemat s.d 3% Pakai Bonus
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-1 text-[11px] text-slate-500 pt-0.5">
+                                                    <Star size={11} className="fill-amber-400 text-amber-400" />
+                                                    <span className="font-bold text-slate-700">{rel?.rating || '5.0'}</span>
+                                                    <span>•</span>
+                                                    <span className="text-[10.5px]">{rel?.sold_count || '10+'} terjual</span>
+                                                </div>
+
+                                                {/* Transisi slide nama toko ke lokasi & tombol menu titik tiga */}
+                                                <div className="flex items-center gap-1 text-[11px] pt-1.5 border-t border-slate-100 relative">
+                                                    <div className="h-4 overflow-hidden relative flex-1 text-slate-500">
+                                                        <div className="transition-transform duration-200 ease-out group-hover:-translate-y-4">
+                                                            <p className="h-4 truncate leading-4 font-semibold text-slate-700">
+                                                                Official Store
+                                                            </p>
+                                                            <p className="h-4 truncate leading-4 text-slate-500">
+                                                                {rel?.city || 'Jakarta Pusat'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="relative">
+                                                        <button
+                                                            type="button"
+                                                            aria-label="Opsi lainnya"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                setOpenMenuId(isMenuOpen ? null : rel.id);
+                                                            }}
+                                                            className={`p-1 rounded-md transition cursor-pointer shrink-0 ${
+                                                                isMenuOpen ? 'text-[#03ac0e] bg-emerald-50' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                                                            }`}
+                                                        >
+                                                            <MoreHorizontal size={14} />
+                                                        </button>
+
+                                                        {isMenuOpen && (
+                                                            <div 
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="absolute bottom-full right-0 mb-1.5 w-36 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-40 animate-in fade-in zoom-in-95 duration-150"
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => handleAddToCartItem(e, rel.id)}
+                                                                    className="w-full px-3 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#03ac0e] flex items-center gap-2 transition cursor-pointer"
+                                                                >
+                                                                    <ShoppingCart size={13} className="text-[#03ac0e]" />
+                                                                    + Keranjang
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => handleShareItem(e, rel.id)}
+                                                                    className="w-full px-3 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition cursor-pointer"
+                                                                >
+                                                                    {isCopied ? (
+                                                                        <>
+                                                                            <Check size={13} className="text-emerald-500" />
+                                                                            <span className="text-emerald-600 font-bold">Tersalin!</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Share2 size={13} className="text-blue-500" />
+                                                                            Salin Link
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </div>
-                                </Link>
-                            ))}
+                                );
+                            })}
 
                             {isLoadingRelated && Array.from({ length: 6 }).map((_, idx) => (
                                 <ProductSkeleton key={`skeleton-${idx}`} />

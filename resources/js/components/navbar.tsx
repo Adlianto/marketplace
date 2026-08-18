@@ -17,19 +17,37 @@ import {
     ShoppingBag,
 } from 'lucide-react';
 
+interface CartPreviewItem {
+    id: number;
+    title: string;
+    price: number | string;
+    image: string;
+}
+
 interface NavbarProps {
     searchQuery?: string;
     onSearchChange?: (val: string) => void;
     cartCount?: number;
+    cartItemsPreview?: CartPreviewItem[];
     notificationCount?: number;
     messageCount?: number;
     shopLogo?: string;
 }
 
+const formatRupiah = (val: number | string) => {
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(num || 0);
+};
+
 export default function Navbar({
     searchQuery = '',
     onSearchChange,
     cartCount = 4,
+    cartItemsPreview,
     notificationCount = 18,
     messageCount = 1,
     shopLogo,
@@ -40,6 +58,28 @@ export default function Navbar({
 
     const [localQuery, setLocalQuery] = useState(searchQuery);
     const defaultAvatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${auth.user?.name || 'Bell'}`;
+
+    // Dummy preview 3 item teratas jika belum dilewatkan dari props
+    const previewList: CartPreviewItem[] = cartItemsPreview || [
+        {
+            id: 1,
+            title: 'ASUS ROG GeForce RTX 4090 24GB Special Edition',
+            price: 38104000,
+            image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=200&auto=format&fit=crop&q=60',
+        },
+        {
+            id: 2,
+            title: 'Intel Core i9 14900K 24-Core Processor',
+            price: 9450000,
+            image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=200&auto=format&fit=crop&q=60',
+        },
+        {
+            id: 3,
+            title: 'Corsair 1000W 80+ Gold Fully Modular PSU',
+            price: 3200000,
+            image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=200&auto=format&fit=crop&q=60',
+        },
+    ];
 
     const handleInputChange = (val: string) => {
         setLocalQuery(val);
@@ -134,7 +174,7 @@ export default function Navbar({
                             <Search size={16} className="text-slate-400 absolute left-3.5 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Cari komponen PC & laptop..."
+                                placeholder="Search..."
                                 value={localQuery}
                                 onChange={(e) => handleInputChange(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#03ac0e] focus:ring-1 focus:ring-[#03ac0e] transition"
@@ -145,32 +185,70 @@ export default function Navbar({
                     {/* Right Navigation */}
                     <div className="flex items-center gap-1 sm:gap-3 shrink-0 h-full">
                         
-                        {/* Cart */}
+                        {/* Cart Dropdown dengan Preview 3 Item */}
                         <div className="relative group h-full flex items-center px-1.5">
                             <Link
                                 href="/cart"
-                                preserveState
-                                preserveScroll
-                                className="relative text-slate-600 group-hover:text-[#03ac0e] transition"
+                                className="relative text-slate-600 group-hover:text-[#03ac0e] transition py-5 flex items-center"
                                 title="Keranjang"
                             >
                                 <ShoppingCart size={21} />
                                 {cartCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-[#ef144a] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="absolute top-3.5 -right-2 bg-[#ef144a] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center border-2 border-white">
                                         {cartCount}
                                     </span>
                                 )}
                             </Link>
 
-                            <div className="absolute top-full -right-16 pt-2 hidden lg:group-hover:block z-50">
-                                <div className="w-80 bg-white border border-slate-200 rounded-xl shadow-xl p-4">
-                                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                                        <h4 className="font-bold text-slate-900 text-xs">Keranjang ({cartCount})</h4>
-                                        <Link href="/cart" preserveState preserveScroll className="text-xs font-semibold text-[#03ac0e] hover:underline">
+                            {/* Dropdown Hover Cart */}
+                            <div className="absolute top-full -right-16 pt-2 hidden lg:group-hover:block z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                                <div className="w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl p-4 space-y-3">
+                                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                                        <h4 className="font-bold text-slate-900 text-xs">
+                                            Keranjang ({cartCount})
+                                        </h4>
+                                        <Link 
+                                            href="/cart" 
+                                            className="text-xs font-bold text-[#03ac0e] hover:underline"
+                                        >
                                             Lihat Sekarang
                                         </Link>
                                     </div>
-                                    <p className="text-slate-400 text-xs py-4 text-center">Keranjang siap untuk checkout</p>
+
+                                    {cartCount > 0 ? (
+                                        <div className="divide-y divide-slate-100 max-h-[220px] overflow-y-auto">
+                                            {previewList.slice(0, 3).map((item) => (
+                                                <Link
+                                                    key={item.id}
+                                                    href="/cart"
+                                                    className="flex items-center gap-3 py-2 hover:bg-slate-50 rounded-lg px-1 transition group/item"
+                                                >
+                                                    <img
+                                                        src={item.image}
+                                                        alt={item.title}
+                                                        className="w-10 h-10 object-cover rounded-md border border-slate-200 shrink-0"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-semibold text-slate-800 truncate group-hover/item:text-[#03ac0e] transition">
+                                                            {item.title}
+                                                        </p>
+                                                        <p className="text-[11px] font-bold text-[#ef144a] mt-0.5">
+                                                            {formatRupiah(item.price)}
+                                                        </p>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-slate-400 text-xs py-4 text-center">Keranjang belanjamu kosong</p>
+                                    )}
+
+                                    <Link
+                                        href="/cart"
+                                        className="block w-full py-2 bg-[#03ac0e] text-white text-center text-xs font-bold rounded-lg hover:bg-[#029b0c] transition shadow-xs"
+                                    >
+                                        Buka Keranjang
+                                    </Link>
                                 </div>
                             </div>
                         </div>
