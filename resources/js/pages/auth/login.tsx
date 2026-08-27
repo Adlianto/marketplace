@@ -36,11 +36,11 @@ export default function Login({ status, canResetPassword = true }: Props) {
             <main className="flex-1 flex items-center justify-center py-10 px-4 sm:px-6 bg-white min-h-[calc(100vh-4rem)]">
                 <div className="w-full max-w-[960px] flex flex-col md:flex-row items-center justify-between gap-10 md:gap-16 my-auto">
                     
-                    {/* Sisi Kiri: Ilustrasi Lebih Besar & Center */}
+                    {/* Sisi Kiri: Ilustrasi */}
                     <div className="hidden md:flex flex-col items-center justify-center text-center w-1/2">
                         <img
                             src="https://illustrations.popsy.co/green/surreal-hourglass.svg"
-                            alt="Ilustrasi Masuk"
+                            alt="Ilustrasi"
                             width={340}
                             height={340}
                             loading="lazy"
