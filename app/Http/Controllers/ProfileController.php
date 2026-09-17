@@ -76,19 +76,4 @@ class ProfileController extends Controller
 
         return back()->with('status', 'PIN transaksi berhasil disimpan!');
     }
-
-    public function show($id)
-    {
-        $product = Product::findOrFail($id);
-
-        $relatedProducts = Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
-            ->take(5)
-            ->get();
-
-        return Inertia::render('product/show', [
-            'product' => $product,
-            'relatedProducts' => $relatedProducts,
-        ]);
-    }
 }
