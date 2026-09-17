@@ -1,9 +1,12 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { CheckCircle2, ChevronDown, LogOut } from 'lucide-react';
-import { lazy, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import type { ReactNode } from 'react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
 import type { Address } from './tab/tambahAlamat';
+
+export { resetForm } from './tab/tambahAlamat';
 
 const BiodataTab = lazy(() => import('./tab/biodata'));
 const AlamatTab = lazy(() => import('./tab/tambahAlamat'));
@@ -221,7 +224,15 @@ export default function Dashboard({ addresses = [] }: DashboardProps) {
                         </div>
 
                         <div className="animate-in duration-300 fade-in">
-                            {renderTab()}
+                            <Suspense
+                                fallback={
+                                    <div className="py-12 text-center text-xs text-gray-400">
+                                        Memuat...
+                                    </div>
+                                }
+                            >
+                                {renderTab()}
+                            </Suspense>
                         </div>
                     </main>
                 </div>

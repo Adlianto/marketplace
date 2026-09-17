@@ -40,12 +40,19 @@ const initialFormData: AddressFormData = {
     is_main: false,
 };
 
+export const resetForm = (): AddressFormData => ({ ...initialFormData });
+
 export default function AlamatTab({ addresses = [] }: AlamatTabProps) {
     const [modalOpen, setModalOpen] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState<AddressFormData>(initialFormData);
+
+    const resetFormState = () => {
+        setEditId(null);
+        setFormData(initialFormData);
+    };
 
     const filteredAddresses = useMemo(() => {
         if (!searchKeyword.trim()) {
@@ -77,8 +84,7 @@ export default function AlamatTab({ addresses = [] }: AlamatTabProps) {
                 is_main: Boolean(address.is_main ?? address.isMain),
             });
         } else {
-            setEditId(null);
-            setFormData(initialFormData);
+            resetFormState();
         }
 
         setModalOpen(true);
@@ -86,8 +92,7 @@ export default function AlamatTab({ addresses = [] }: AlamatTabProps) {
 
     const handleCloseModal = () => {
         setModalOpen(false);
-        setEditId(null);
-        setFormData(initialFormData);
+        resetFormState();
     };
 
     const handleSave = () => {
@@ -121,6 +126,7 @@ export default function AlamatTab({ addresses = [] }: AlamatTabProps) {
                 preserveScroll: true,
                 onSuccess: () => {
                     handleCloseModal();
+                    resetFormState();
                 },
                 onFinish: () => setIsSubmitting(false),
             });
@@ -129,6 +135,7 @@ export default function AlamatTab({ addresses = [] }: AlamatTabProps) {
                 preserveScroll: true,
                 onSuccess: () => {
                     handleCloseModal();
+                    resetFormState();
                 },
                 onFinish: () => setIsSubmitting(false),
             });
