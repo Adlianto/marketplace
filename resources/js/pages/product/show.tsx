@@ -21,45 +21,11 @@ import type { ReactNode } from 'react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
 import ProductSkeleton from '@/components/productSkeleton';
-
-interface Review {
-    id: number;
-    user_name: string;
-    user_avatar: string;
-    rating: number;
-    comment: string;
-    created_at: string;
-}
-
-interface Specification {
-    id: number;
-    name: string;
-    value: string;
-}
-
-interface ProductItem {
-    id: number;
-    title: string;
-    slug?: string;
-    price: number;
-    original_price?: number | null;
-    discount?: number | null;
-    city?: string;
-    description?: string;
-    image?: string;
-    stock?: number;
-    rating?: number;
-    sold_count?: string | number;
-    category_id?: number;
-    rating_avg?: number;
-    reviews_count?: number;
-    specifications?: Specification[];
-    reviews?: Review[];
-}
+import type { Product } from '@/types';
 
 interface ProductShowProps {
-    product: ProductItem;
-    relatedProducts: ProductItem[];
+    product: Product;
+    relatedProducts: Product[];
 }
 
 function LazySection({
@@ -236,12 +202,13 @@ export default function ProductShow({
     const reviewsCount =
         product?.reviews_count ?? product?.reviews?.length ?? 0;
 
-    const formatRupiah = (val: number) => {
+    const formatRupiah = (val: number | string) => {
+        const num = typeof val === 'string' ? parseFloat(val) : Number(val);
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
             minimumFractionDigits: 0,
-        }).format(val);
+        }).format(isNaN(num) ? 0 : num);
     };
 
     const handleQuantityChange = (type: 'inc' | 'dec') => {
@@ -843,7 +810,7 @@ export default function ProductShow({
                                 <span className="text-slate-500">Subtotal</span>
                                 <span className="text-lg font-extrabold text-slate-900">
                                     {formatRupiah(
-                                        (product?.price || 0) * quantity,
+                                        Number(product?.price || 0) * quantity,
                                     )}
                                 </span>
                             </div>

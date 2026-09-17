@@ -14,37 +14,11 @@ import {
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
-
-interface CartItem {
-    id: number;
-    product_id: number;
-    title: string;
-    slug?: string;
-    price: number | string;
-    original_price?: number | string | null;
-    discount?: number | null;
-    image?: string;
-    stock?: number;
-    city?: string;
-    quantity: number;
-    selected?: boolean;
-}
-
-interface ProductItem {
-    id: number;
-    title: string;
-    price: number | string;
-    original_price?: number | string | null;
-    discount?: number | null;
-    city?: string;
-    rating?: number | string;
-    sold_count?: string | number;
-    image?: string;
-}
+import type { CartItem, Product } from '@/types';
 
 interface CartProps {
     cartItems?: CartItem[];
-    recommendations?: ProductItem[];
+    recommendations?: Product[];
 }
 
 const formatRupiah = (val: number | string | null | undefined) => {
