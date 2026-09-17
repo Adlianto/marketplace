@@ -54,16 +54,22 @@ export default function Navbar({
     shopLogo,
 }: NavbarProps) {
     const page = usePage();
-    const pageProps = (page && page.props) ? page.props as any : {};
-    
+    const pageProps = page && page.props ? (page.props as any) : {};
+
     // Proteksi data cart agar selalu berupa array/angka valid
     const sharedCartCount = Number(pageProps?.cart?.count) || 0;
-    const sharedCartPreview: CartPreviewItem[] = Array.isArray(pageProps?.cart?.preview) ? pageProps.cart.preview : [];
+    const sharedCartPreview: CartPreviewItem[] = Array.isArray(
+        pageProps?.cart?.preview,
+    )
+        ? pageProps.cart.preview
+        : [];
 
-    const activeCartCount = propCartCount !== undefined ? propCartCount : sharedCartCount;
-    const activeCartPreview = Array.isArray(propCartPreview) && propCartPreview.length > 0 
-        ? propCartPreview 
-        : sharedCartPreview;
+    const activeCartCount =
+        propCartCount !== undefined ? propCartCount : sharedCartCount;
+    const activeCartPreview =
+        Array.isArray(propCartPreview) && propCartPreview.length > 0
+            ? propCartPreview
+            : sharedCartPreview;
 
     const auth = pageProps?.auth || { user: null };
     const [localQuery, setLocalQuery] = useState(searchQuery || '');
@@ -73,81 +79,131 @@ export default function Navbar({
         setLocalQuery(val);
 
         if (onSearchChange) {
-onSearchChange(val);
-}
+            onSearchChange(val);
+        }
     };
 
     return (
-        <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-xs font-sans">
-            <div className="max-w-[1240px] mx-auto px-3 sm:px-4 lg:px-6">
-                <div className="h-16 flex items-center justify-between gap-4 lg:gap-6">
-                    
+        <header className="sticky top-0 z-50 border-b border-slate-200 bg-white font-sans shadow-xs">
+            <div className="mx-auto max-w-[1240px] px-3 sm:px-4 lg:px-6">
+                <div className="flex h-16 items-center justify-between gap-4 lg:gap-6">
                     {/* Logo & Kategori */}
-                    <div className="flex items-center gap-6 shrink-0 h-full">
-                        <Link href="/" preserveState preserveScroll className="flex items-center">
+                    <div className="flex h-full shrink-0 items-center gap-6">
+                        <Link
+                            href="/"
+                            preserveState
+                            preserveScroll
+                            className="flex items-center"
+                        >
                             <span className="text-2xl font-black tracking-tight text-[#03ac0e] select-none">
                                 Marketplace
                             </span>
                         </Link>
 
-                        <div className="relative group h-full hidden lg:flex items-center">
-                            <span className="text-sm font-semibold text-slate-700 group-hover:text-[#03ac0e] transition cursor-pointer py-5">
+                        <div className="group relative hidden h-full items-center lg:flex">
+                            <span className="cursor-pointer py-5 text-sm font-semibold text-slate-700 transition group-hover:text-[#03ac0e]">
                                 Kategori
                             </span>
 
-                            <div className="absolute top-full left-0 pt-2 hidden group-hover:block z-50">
-                                <div className="w-[580px] bg-white border border-slate-200 rounded-md shadow-xl p-5">
+                            <div className="absolute top-full left-0 z-50 hidden pt-2 group-hover:block">
+                                <div className="w-[580px] rounded-md border border-slate-200 bg-white p-5 shadow-xl">
                                     <div className="grid grid-cols-3 gap-6 text-xs">
                                         <div>
-                                            <h4 className="font-bold text-slate-900 mb-3 text-sm">Laptop</h4>
+                                            <h4 className="mb-3 text-sm font-bold text-slate-900">
+                                                Laptop
+                                            </h4>
                                             <ul className="space-y-2 text-slate-600">
                                                 <li>
-                                                    <Link href="/?category=laptop-gaming" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=laptop-gaming"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         Laptop Gaming
                                                     </Link>
                                                 </li>
                                                 <li>
-                                                    <Link href="/?category=laptop-ultrabook" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=laptop-ultrabook"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         Laptop Ultrabook
                                                     </Link>
                                                 </li>
                                             </ul>
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 mb-3 text-sm">Komponen Inti</h4>
+                                            <h4 className="mb-3 text-sm font-bold text-slate-900">
+                                                Komponen Inti
+                                            </h4>
                                             <ul className="space-y-2 text-slate-600">
                                                 <li>
-                                                    <Link href="/?category=processor-cpu" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=processor-cpu"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         Processor & CPU
                                                     </Link>
                                                 </li>
                                                 <li>
-                                                    <Link href="/?category=vga-graphic-card" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=vga-graphic-card"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         VGA & Graphic Card
                                                     </Link>
                                                 </li>
                                                 <li>
-                                                    <Link href="/?category=motherboard" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=motherboard"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         Motherboard
                                                     </Link>
                                                 </li>
                                             </ul>
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 mb-3 text-sm">Storage & Part</h4>
+                                            <h4 className="mb-3 text-sm font-bold text-slate-900">
+                                                Storage & Part
+                                            </h4>
                                             <ul className="space-y-2 text-slate-600">
                                                 <li>
-                                                    <Link href="/?category=ram-memory" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=ram-memory"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         RAM & Memory
                                                     </Link>
                                                 </li>
                                                 <li>
-                                                    <Link href="/?category=ssd-storage" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=ssd-storage"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         SSD & Storage
                                                     </Link>
                                                 </li>
                                                 <li>
-                                                    <Link href="/?category=power-supply-psu" preserveState preserveScroll className="hover:text-[#03ac0e] block transition">
+                                                    <Link
+                                                        href="/?category=power-supply-psu"
+                                                        preserveState
+                                                        preserveScroll
+                                                        className="block transition hover:text-[#03ac0e]"
+                                                    >
                                                         Power Supply
                                                     </Link>
                                                 </li>
@@ -160,83 +216,96 @@ onSearchChange(val);
                     </div>
 
                     {/* Search Bar */}
-                    <div className="flex-1 max-w-full lg:max-w-2xl">
+                    <div className="max-w-full flex-1 lg:max-w-2xl">
                         <div className="relative flex items-center">
-                            <Search size={16} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+                            <Search
+                                size={16}
+                                className="pointer-events-none absolute left-3.5 text-slate-400"
+                            />
                             <input
                                 type="text"
                                 placeholder="Search..."
                                 value={localQuery}
-                                onChange={(e) => handleInputChange(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-md bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#03ac0e] focus:ring-1 focus:ring-[#03ac0e] transition"
+                                onChange={(e) =>
+                                    handleInputChange(e.target.value)
+                                }
+                                className="w-full rounded-md border border-slate-300 bg-white py-2 pr-4 pl-10 text-xs transition placeholder:text-slate-400 focus:border-[#03ac0e] focus:ring-1 focus:ring-[#03ac0e] focus:outline-none sm:text-sm"
                             />
                         </div>
                     </div>
 
                     {/* Right Navigation */}
-                    <div className="flex items-center gap-1 sm:gap-3 shrink-0 h-full">
-                        
+                    <div className="flex h-full shrink-0 items-center gap-1 sm:gap-3">
                         {/* Cart Dropdown */}
-                        <div className="relative group h-full flex items-center px-1.5">
+                        <div className="group relative flex h-full items-center px-1.5">
                             <Link
                                 href="/cart"
-                                className="relative text-slate-600 group-hover:text-[#03ac0e] transition py-5 flex items-center"
+                                className="relative flex items-center py-5 text-slate-600 transition group-hover:text-[#03ac0e]"
                                 title="Keranjang"
                             >
                                 <ShoppingCart size={21} />
                                 {activeCartCount > 0 && (
-                                    <span className="absolute top-3.5 -right-2 bg-[#ef144a] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="absolute top-3.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-[#ef144a] px-1 text-[10px] font-bold text-white">
                                         {activeCartCount}
                                     </span>
                                 )}
                             </Link>
 
                             {/* Dropdown Hover Cart */}
-                            <div className="absolute top-full -right-16 pt-2 hidden lg:group-hover:block z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                                <div className="w-[340px] bg-white border border-slate-200 rounded-md shadow-xl p-4 space-y-3">
-                                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                                        <h4 className="font-bold text-slate-900 text-xs">
+                            <div className="absolute top-full -right-16 z-50 hidden animate-in pt-2 duration-150 fade-in slide-in-from-top-1 lg:group-hover:block">
+                                <div className="w-[340px] space-y-3 rounded-md border border-slate-200 bg-white p-4 shadow-xl">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                        <h4 className="text-xs font-bold text-slate-900">
                                             Keranjang ({activeCartCount})
                                         </h4>
-                                        <Link 
-                                            href="/cart" 
+                                        <Link
+                                            href="/cart"
                                             className="text-xs font-bold text-[#03ac0e] hover:underline"
                                         >
                                             Lihat Sekarang
                                         </Link>
                                     </div>
 
-                                    {activeCartCount > 0 && activeCartPreview.length > 0 ? (
-                                        <div className="divide-y divide-slate-100 max-h-[220px] overflow-y-auto">
-                                            {activeCartPreview.slice(0, 3).map((item: CartPreviewItem) => (
-                                                <Link
-                                                    key={item.id}
-                                                    href="/cart"
-                                                    className="flex items-center gap-3 py-2 hover:bg-slate-50 rounded-md px-1 transition group/item"
-                                                >
-                                                    <img
-                                                        src={item.image}
-                                                        alt={item.title}
-                                                        className="w-10 h-10 object-cover rounded-md border border-slate-200 shrink-0"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs font-semibold text-slate-800 truncate group-hover/item:text-[#03ac0e] transition">
-                                                            {item.title}
-                                                        </p>
-                                                        <p className="text-[11px] font-bold text-[#ef144a] mt-0.5">
-                                                            {formatRupiah(item.price)}
-                                                        </p>
-                                                    </div>
-                                                </Link>
-                                            ))}
+                                    {activeCartCount > 0 &&
+                                    activeCartPreview.length > 0 ? (
+                                        <div className="max-h-[220px] divide-y divide-slate-100 overflow-y-auto">
+                                            {activeCartPreview
+                                                .slice(0, 3)
+                                                .map(
+                                                    (item: CartPreviewItem) => (
+                                                        <Link
+                                                            key={item.id}
+                                                            href="/cart"
+                                                            className="group/item flex items-center gap-3 rounded-md px-1 py-2 transition hover:bg-slate-50"
+                                                        >
+                                                            <img
+                                                                src={item.image}
+                                                                alt={item.title}
+                                                                className="h-10 w-10 shrink-0 rounded-md border border-slate-200 object-cover"
+                                                            />
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="truncate text-xs font-semibold text-slate-800 transition group-hover/item:text-[#03ac0e]">
+                                                                    {item.title}
+                                                                </p>
+                                                                <p className="mt-0.5 text-[11px] font-bold text-[#ef144a]">
+                                                                    {formatRupiah(
+                                                                        item.price,
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </Link>
+                                                    ),
+                                                )}
                                         </div>
                                     ) : (
-                                        <p className="text-slate-400 text-xs py-4 text-center">Keranjang belanjamu kosong</p>
+                                        <p className="py-4 text-center text-xs text-slate-400">
+                                            Keranjang belanjamu kosong
+                                        </p>
                                     )}
 
                                     <Link
                                         href="/cart"
-                                        className="block w-full py-2 bg-[#03ac0e] text-white text-center text-xs font-bold rounded-md hover:bg-[#029b0c] transition shadow-xs"
+                                        className="block w-full rounded-md bg-[#03ac0e] py-2 text-center text-xs font-bold text-white shadow-xs transition hover:bg-[#029b0c]"
                                     >
                                         Buka Keranjang
                                     </Link>
@@ -245,17 +314,17 @@ onSearchChange(val);
                         </div>
 
                         {/* Pesan */}
-                        <div className="relative group h-full flex items-center px-1.5">
+                        <div className="group relative flex h-full items-center px-1.5">
                             <Link
                                 href="/chat"
                                 preserveState
                                 preserveScroll
-                                className="relative text-slate-600 group-hover:text-[#03ac0e] transition"
+                                className="relative text-slate-600 transition group-hover:text-[#03ac0e]"
                                 title="Pesan"
                             >
                                 <Mail size={21} />
                                 {messageCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-[#ef144a] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="absolute -top-2 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-[#ef144a] px-1 text-[10px] font-bold text-white">
                                         {messageCount}
                                     </span>
                                 )}
@@ -263,38 +332,47 @@ onSearchChange(val);
                         </div>
 
                         {/* Notifikasi */}
-                        <div className="relative group h-full hidden lg:flex items-center px-1.5">
+                        <div className="group relative hidden h-full items-center px-1.5 lg:flex">
                             <button
                                 type="button"
-                                className="relative text-slate-600 group-hover:text-[#03ac0e] transition cursor-pointer"
+                                className="relative cursor-pointer text-slate-600 transition group-hover:text-[#03ac0e]"
                                 title="Notifikasi"
                             >
                                 <Bell size={21} />
                                 {notificationCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-[#ef144a] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="absolute -top-2 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-[#ef144a] px-1 text-[10px] font-bold text-white">
                                         {notificationCount}
                                     </span>
                                 )}
                             </button>
                         </div>
 
-                        <div className="h-6 w-px bg-slate-200 mx-1 hidden lg:block" />
+                        <div className="mx-1 hidden h-6 w-px bg-slate-200 lg:block" />
 
                         {/* Toko */}
-                        <div className="relative group h-full hidden lg:flex items-center px-2">
-                            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 group-hover:text-[#03ac0e] transition cursor-pointer py-5">
+                        <div className="group relative hidden h-full items-center px-2 lg:flex">
+                            <div className="flex cursor-pointer items-center gap-1.5 py-5 text-sm font-semibold text-slate-700 transition group-hover:text-[#03ac0e]">
                                 {shopLogo ? (
-                                    <img src={shopLogo} alt="Toko" className="w-5 h-5 rounded-md object-cover" />
+                                    <img
+                                        src={shopLogo}
+                                        alt="Toko"
+                                        className="h-5 w-5 rounded-md object-cover"
+                                    />
                                 ) : (
-                                    <Store size={20} className="text-slate-600 group-hover:text-[#03ac0e]" />
+                                    <Store
+                                        size={20}
+                                        className="text-slate-600 group-hover:text-[#03ac0e]"
+                                    />
                                 )}
                                 <span>Toko</span>
                             </div>
 
-                            <div className="absolute top-full -right-6 pt-2 hidden group-hover:block z-50">
-                                <div className="w-64 bg-white border border-slate-200 shadow-xl rounded-md p-4 text-center">
-                                    <p className="text-xs text-slate-600 mb-3">Anda belum memiliki toko.</p>
-                                    <button className="w-full bg-[#03ac0e] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#029b0c] transition cursor-pointer shadow-xs">
+                            <div className="absolute top-full -right-6 z-50 hidden pt-2 group-hover:block">
+                                <div className="w-64 rounded-md border border-slate-200 bg-white p-4 text-center shadow-xl">
+                                    <p className="mb-3 text-xs text-slate-600">
+                                        Anda belum memiliki toko.
+                                    </p>
+                                    <button className="w-full cursor-pointer rounded-lg bg-[#03ac0e] py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#029b0c]">
                                         Buka Toko Gratis
                                     </button>
                                 </div>
@@ -302,105 +380,152 @@ onSearchChange(val);
                         </div>
 
                         {/* User Profile */}
-                        <div className="flex items-center h-full">
+                        <div className="flex h-full items-center">
                             {auth.user ? (
-                                <div className="relative group h-full flex items-center pl-2">
+                                <div className="group relative flex h-full items-center pl-2">
                                     <Link
                                         href={dashboard()}
                                         preserveState
                                         preserveScroll
-                                        className="flex items-center gap-2 text-sm font-semibold text-slate-800 group-hover:text-[#03ac0e] transition py-5"
+                                        className="flex items-center gap-2 py-5 text-sm font-semibold text-slate-800 transition group-hover:text-[#03ac0e]"
                                     >
-                                        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-orange-100 flex items-center justify-center shrink-0">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-orange-100">
                                             <img
-                                                src={auth.user.avatar || defaultAvatar}
+                                                src={
+                                                    auth.user.avatar ||
+                                                    defaultAvatar
+                                                }
                                                 onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = defaultAvatar;
+                                                    (
+                                                        e.target as HTMLImageElement
+                                                    ).src = defaultAvatar;
                                                 }}
                                                 alt={auth.user.name}
-                                                className="w-full h-full object-cover"
+                                                className="h-full w-full object-cover"
                                             />
                                         </div>
-                                        <span className="truncate max-w-[90px]">{auth.user.name || 'Bell'}</span>
+                                        <span className="max-w-[90px] truncate">
+                                            {auth.user.name || 'Bell'}
+                                        </span>
                                     </Link>
 
-                                    <div className="absolute top-full right-0 pt-2 hidden group-hover:block z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                                        <div className="w-[390px] bg-white border border-slate-200 shadow-xl rounded-md overflow-hidden">
+                                    <div className="absolute top-full right-0 z-50 hidden animate-in pt-2 duration-150 fade-in slide-in-from-top-1 group-hover:block">
+                                        <div className="w-[390px] overflow-hidden rounded-md border border-slate-200 bg-white shadow-xl">
                                             <Link
                                                 href={dashboard()}
-                                                className="flex items-center gap-3 p-3.5 m-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100/80 transition"
+                                                className="m-2 flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3.5 transition hover:bg-slate-100/80"
                                             >
-                                                <div className="w-10 h-10 bg-orange-100 rounded-full overflow-hidden shrink-0 border border-slate-200">
+                                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-orange-100">
                                                     <img
-                                                        src={auth.user.avatar || defaultAvatar}
+                                                        src={
+                                                            auth.user.avatar ||
+                                                            defaultAvatar
+                                                        }
                                                         onError={(e) => {
-                                                            (e.target as HTMLImageElement).src = defaultAvatar;
+                                                            (
+                                                                e.target as HTMLImageElement
+                                                            ).src =
+                                                                defaultAvatar;
                                                         }}
                                                         alt={auth.user.name}
-                                                        className="w-full h-full object-cover"
+                                                        className="h-full w-full object-cover"
                                                     />
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-slate-800 text-xs truncate">{auth.user.name}</p>
-                                                    <span className="text-[10px] text-[#03ac0e] font-bold bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-xs font-bold text-slate-800">
+                                                        {auth.user.name}
+                                                    </p>
+                                                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#03ac0e] uppercase">
                                                         Member Silver
                                                     </span>
                                                 </div>
-                                                <ChevronRight size={16} className="text-slate-400 shrink-0" />
+                                                <ChevronRight
+                                                    size={16}
+                                                    className="shrink-0 text-slate-400"
+                                                />
                                             </Link>
 
                                             <div className="grid grid-cols-2">
-                                                <div className="p-3.5 border-r border-slate-100 space-y-4">
+                                                <div className="space-y-4 border-r border-slate-100 p-3.5">
                                                     <div className="flex items-start gap-2.5">
-                                                        <div className="p-1 bg-[#03ac0e] rounded-md text-white">
-                                                            <Plus size={13} strokeWidth={3} />
+                                                        <div className="rounded-md bg-[#03ac0e] p-1 text-white">
+                                                            <Plus
+                                                                size={13}
+                                                                strokeWidth={3}
+                                                            />
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs font-bold text-slate-800 leading-tight">
-                                                                PLUS <span className="text-[#03ac0e] font-bold text-[10px]">Langganan</span>
+                                                            <p className="text-xs leading-tight font-bold text-slate-800">
+                                                                PLUS{' '}
+                                                                <span className="text-[10px] font-bold text-[#03ac0e]">
+                                                                    Langganan
+                                                                </span>
                                                             </p>
-                                                            <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
-                                                                Gratis Ongkir tanpa batas!
+                                                            <p className="mt-0.5 text-[10px] leading-tight text-slate-500">
+                                                                Gratis Ongkir
+                                                                tanpa batas!
                                                             </p>
                                                         </div>
                                                     </div>
 
                                                     <AccountMiniLink
-                                                        icon={<Wallet size={15} className="text-blue-500" />}
+                                                        icon={
+                                                            <Wallet
+                                                                size={15}
+                                                                className="text-blue-500"
+                                                            />
+                                                        }
                                                         label="GoPay"
                                                         action="Aktifkan"
                                                     />
                                                     <AccountMiniLink
-                                                        icon={<CreditCard size={15} className="text-[#03ac0e]" />}
+                                                        icon={
+                                                            <CreditCard
+                                                                size={15}
+                                                                className="text-[#03ac0e]"
+                                                            />
+                                                        }
                                                         label="Market Card"
                                                         action="Daftar"
                                                     />
                                                     <AccountMiniLink
-                                                        icon={<Wallet size={15} className="text-[#03ac0e]" />}
+                                                        icon={
+                                                            <Wallet
+                                                                size={15}
+                                                                className="text-[#03ac0e]"
+                                                            />
+                                                        }
                                                         label="Saldo"
                                                         value="Rp0"
                                                     />
                                                 </div>
 
-                                                <div className="p-3.5 flex flex-col justify-between">
+                                                <div className="flex flex-col justify-between p-3.5">
                                                     <div className="space-y-3">
                                                         <Link
                                                             href="/orders"
-                                                            className="flex items-center gap-2.5 text-xs text-slate-600 hover:text-[#03ac0e] transition"
+                                                            className="flex items-center gap-2.5 text-xs text-slate-600 transition hover:text-[#03ac0e]"
                                                         >
-                                                            <ShoppingBag size={16} /> Pembelian
+                                                            <ShoppingBag
+                                                                size={16}
+                                                            />{' '}
+                                                            Pembelian
                                                         </Link>
                                                         <Link
                                                             href="/wishlist"
-                                                            className="flex items-center gap-2.5 text-xs text-slate-600 hover:text-[#03ac0e] transition"
+                                                            className="flex items-center gap-2.5 text-xs text-slate-600 transition hover:text-[#03ac0e]"
                                                         >
-                                                            <Heart size={16} /> Wishlist
+                                                            <Heart size={16} />{' '}
+                                                            Wishlist
                                                         </Link>
                                                         <Link
                                                             href="/settings"
-                                                            className="flex items-center gap-2.5 text-xs text-slate-600 hover:text-[#03ac0e] transition"
+                                                            className="flex items-center gap-2.5 text-xs text-slate-600 transition hover:text-[#03ac0e]"
                                                         >
-                                                            <Settings size={16} /> Pengaturan
+                                                            <Settings
+                                                                size={16}
+                                                            />{' '}
+                                                            Pengaturan
                                                         </Link>
                                                     </div>
 
@@ -408,13 +533,13 @@ onSearchChange(val);
                                                         href="/logout"
                                                         method="post"
                                                         as="button"
-                                                        className="flex items-center gap-2 text-xs text-slate-400 hover:text-red-500 transition pt-3 border-t border-slate-100 cursor-pointer w-full text-left"
+                                                        className="flex w-full cursor-pointer items-center gap-2 border-t border-slate-100 pt-3 text-left text-xs text-slate-400 transition hover:text-red-500"
                                                     >
-                                                        <LogOut size={15} /> Keluar
+                                                        <LogOut size={15} />{' '}
+                                                        Keluar
                                                     </Link>
                                                 </div>
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
@@ -424,7 +549,7 @@ onSearchChange(val);
                                         href={login()}
                                         preserveState
                                         preserveScroll
-                                        className="px-4 py-1.5 rounded-md text-xs font-bold text-[#03ac0e] border border-[#03ac0e] hover:bg-emerald-50 transition"
+                                        className="rounded-md border border-[#03ac0e] px-4 py-1.5 text-xs font-bold text-[#03ac0e] transition hover:bg-emerald-50"
                                     >
                                         Masuk
                                     </Link>
@@ -432,14 +557,13 @@ onSearchChange(val);
                                         href={register()}
                                         preserveState
                                         preserveScroll
-                                        className="px-4 py-1.5 rounded-md text-xs font-bold bg-[#03ac0e] text-white border border-[#03ac0e] hover:bg-[#029b0c] transition shadow-xs"
+                                        className="rounded-md border border-[#03ac0e] bg-[#03ac0e] px-4 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#029b0c]"
                                     >
                                         Daftar
                                     </Link>
                                 </div>
                             )}
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -459,13 +583,23 @@ function AccountMiniLink({
     value?: string;
 }) {
     return (
-        <div className="flex items-center justify-between group/item cursor-pointer">
+        <div className="group/item flex cursor-pointer items-center justify-between">
             <div className="flex items-center gap-2">
                 {icon}
-                <span className="text-xs font-medium text-slate-700 group-hover/item:text-[#03ac0e]">{label}</span>
+                <span className="text-xs font-medium text-slate-700 group-hover/item:text-[#03ac0e]">
+                    {label}
+                </span>
             </div>
-            {action && <span className="text-[10px] font-bold text-[#03ac0e] hover:underline">{action}</span>}
-            {value && <span className="text-xs font-bold text-slate-800">{value}</span>}
+            {action && (
+                <span className="text-[10px] font-bold text-[#03ac0e] hover:underline">
+                    {action}
+                </span>
+            )}
+            {value && (
+                <span className="text-xs font-bold text-slate-800">
+                    {value}
+                </span>
+            )}
         </div>
     );
 }

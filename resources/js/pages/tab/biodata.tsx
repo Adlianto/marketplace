@@ -16,25 +16,40 @@ export default function BiodataTab() {
     const { auth } = usePage().props as { auth: { user: UserAuth | null } };
     const user = auth.user;
 
-    const [modal, setModal] = useState({ open: false, type: '', title: '', value: '' });
+    const [modal, setModal] = useState({
+        open: false,
+        type: '',
+        title: '',
+        value: '',
+    });
     const [passwordModal, setPasswordModal] = useState(false);
     const [pinModal, setPinModal] = useState(false);
 
-    const [passwordForm, setPasswordForm] = useState({ password: '', password_confirmation: '' });
+    const [passwordForm, setPasswordForm] = useState({
+        password: '',
+        password_confirmation: '',
+    });
     const [pinForm, setPinForm] = useState({ pin: '', pin_confirmation: '' });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const userPhoto = user?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'Bell'}`;
+    const userPhoto =
+        user?.avatar ||
+        `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'Bell'}`;
 
     const openModal = (type: string, title: string, currentVal?: string) => {
         setModal({ open: true, type, title, value: currentVal || '' });
     };
 
     const handleSaveModal = () => {
-        router.patch('/profile', { [modal.type]: modal.value }, {
-            preserveScroll: true,
-            onSuccess: () => setModal({ open: false, type: '', title: '', value: '' }),
-        });
+        router.patch(
+            '/profile',
+            { [modal.type]: modal.value },
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    setModal({ open: false, type: '', title: '', value: '' }),
+            },
+        );
     };
 
     const handleSavePassword = (e: React.FormEvent) => {
@@ -98,23 +113,24 @@ export default function BiodataTab() {
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-10 animate-in fade-in duration-300">
+        <div className="flex animate-in flex-col gap-10 duration-300 fade-in md:flex-row">
             {/* Foto Profil & Tombol Keamanan */}
-            <div className="w-full md:w-[280px] shrink-0 space-y-4">
-                <div className="p-5 border border-gray-200 rounded-lg shadow-xs text-center bg-white">
+            <div className="w-full shrink-0 space-y-4 md:w-[280px]">
+                <div className="rounded-lg border border-gray-200 bg-white p-5 text-center shadow-xs">
                     <div
-                        className="relative group cursor-pointer mb-3 aspect-square rounded-lg overflow-hidden border border-gray-200 bg-slate-50 flex items-center justify-center"
+                        className="group relative mb-3 flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-slate-50"
                         onClick={handlePhotoClick}
                     >
                         <img
                             src={userPhoto}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                             alt="profile"
                             onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'Bell'}`;
+                                (e.target as HTMLImageElement).src =
+                                    `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'Bell'}`;
                             }}
                         />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
                             <Camera size={28} className="text-white" />
                         </div>
                     </div>
@@ -130,11 +146,11 @@ export default function BiodataTab() {
                     <button
                         type="button"
                         onClick={handlePhotoClick}
-                        className="w-full py-2 border border-gray-200 rounded-md font-bold text-xs text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                        className="w-full cursor-pointer rounded-md border border-gray-200 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-50"
                     >
                         Pilih Foto
                     </button>
-                    <p className="text-[10px] text-gray-400 leading-relaxed text-left mt-2">
+                    <p className="mt-2 text-left text-[10px] leading-relaxed text-gray-400">
                         Besar file: maksimum 10 MB. Format: .JPG, .JPEG, .PNG
                     </p>
                 </div>
@@ -153,7 +169,11 @@ export default function BiodataTab() {
                     <SecurityButton
                         label="Verifikasi Instan"
                         icon={<Fingerprint size={13} />}
-                        onClick={() => alert('Fitur Passkey / Biometrik browser terdeteksi aktif!')}
+                        onClick={() =>
+                            alert(
+                                'Fitur Passkey / Biometrik browser terdeteksi aktif!',
+                            )
+                        }
                     />
                 </div>
             </div>
@@ -161,56 +181,80 @@ export default function BiodataTab() {
             {/* Biodata & Kontak */}
             <div className="flex-1 space-y-8">
                 <section>
-                    <h3 className="font-bold text-xs text-gray-800 mb-4 uppercase tracking-wider">
+                    <h3 className="mb-4 text-xs font-bold tracking-wider text-gray-800 uppercase">
                         Ubah Biodata Diri
                     </h3>
                     <div className="space-y-4">
                         <InfoRow
                             label="Nama"
                             value={user?.name}
-                            onAction={() => openModal('name', 'Ubah Nama', user?.name)}
+                            onAction={() =>
+                                openModal('name', 'Ubah Nama', user?.name)
+                            }
                         />
                         <InfoRow
                             label="Tanggal Lahir"
                             value={user?.birthday}
                             placeholder="Tambah Tanggal Lahir"
-                            onAction={() => openModal('birthday', 'Ubah Tanggal Lahir', user?.birthday)}
+                            onAction={() =>
+                                openModal(
+                                    'birthday',
+                                    'Ubah Tanggal Lahir',
+                                    user?.birthday,
+                                )
+                            }
                         />
                         <InfoRow
                             label="Jenis Kelamin"
                             value={user?.gender}
                             placeholder="Tambah Jenis Kelamin"
-                            onAction={() => openModal('gender', 'Ubah Jenis Kelamin', user?.gender)}
+                            onAction={() =>
+                                openModal(
+                                    'gender',
+                                    'Ubah Jenis Kelamin',
+                                    user?.gender,
+                                )
+                            }
                         />
                     </div>
                 </section>
 
                 <section>
-                    <h3 className="font-bold text-xs text-gray-800 mb-4 uppercase tracking-wider">
+                    <h3 className="mb-4 text-xs font-bold tracking-wider text-gray-800 uppercase">
                         Ubah Kontak
                     </h3>
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-500 w-1/3 font-medium">Email</span>
-                            <div className="flex-1 flex items-center gap-3">
-                                <span className="font-bold text-gray-800 truncate max-w-[200px]">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="w-1/3 font-medium text-gray-500">
+                                Email
+                            </span>
+                            <div className="flex flex-1 items-center gap-3">
+                                <span className="max-w-[200px] truncate font-bold text-gray-800">
                                     {user?.email}
                                 </span>
-                                <span className="bg-green-100 text-green-600 text-[10px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">
+                                <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-black tracking-tighter text-green-600 uppercase">
                                     Terverifikasi
                                 </span>
                             </div>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-500 w-1/3 font-medium">Nomor HP</span>
-                            <div className="flex-1 flex items-center gap-3">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="w-1/3 font-medium text-gray-500">
+                                Nomor HP
+                            </span>
+                            <div className="flex flex-1 items-center gap-3">
                                 <span className="font-bold text-gray-800">
                                     {user?.phone || 'Belum ditambahkan'}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={() => openModal('phone', 'Ubah Nomor HP', user?.phone)}
-                                    className="text-green-500 font-bold ml-auto text-xs uppercase hover:underline cursor-pointer"
+                                    onClick={() =>
+                                        openModal(
+                                            'phone',
+                                            'Ubah Nomor HP',
+                                            user?.phone,
+                                        )
+                                    }
+                                    className="ml-auto cursor-pointer text-xs font-bold text-green-500 uppercase hover:underline"
                                 >
                                     {user?.phone ? 'Ubah' : 'Tambah'}
                                 </button>
@@ -222,39 +266,57 @@ export default function BiodataTab() {
 
             {/* Modal Ubah Biodata */}
             {modal.open && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-[420px] rounded-lg shadow-xl p-6 relative">
+                <div className="fixed inset-0 z-50 flex animate-in items-center justify-center bg-black/50 p-4 duration-200 fade-in">
+                    <div className="relative w-full max-w-[420px] rounded-lg bg-white p-6 shadow-xl">
                         <button
                             type="button"
                             onClick={() => setModal({ ...modal, open: false })}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
+                            className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-gray-600"
                         >
                             <X size={20} />
                         </button>
-                        <h2 className="text-base font-bold text-gray-800 mb-4">{modal.title}</h2>
+                        <h2 className="mb-4 text-base font-bold text-gray-800">
+                            {modal.title}
+                        </h2>
 
                         <div className="space-y-3.5">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
                                     {modal.title.split(' ').slice(1).join(' ')}
                                 </label>
 
                                 {modal.type === 'gender' ? (
                                     <select
                                         value={modal.value}
-                                        onChange={(e) => setModal({ ...modal, value: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-md px-3 py-2 text-xs outline-none focus:border-green-500 appearance-none bg-white font-bold text-gray-700 cursor-pointer"
+                                        onChange={(e) =>
+                                            setModal({
+                                                ...modal,
+                                                value: e.target.value,
+                                            })
+                                        }
+                                        className="w-full cursor-pointer appearance-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-green-500"
                                     >
-                                        <option value="">Pilih Jenis Kelamin</option>
+                                        <option value="">
+                                            Pilih Jenis Kelamin
+                                        </option>
                                         <option value="Pria">Pria</option>
                                         <option value="Wanita">Wanita</option>
                                     </select>
                                 ) : (
                                     <input
-                                        type={modal.type === 'birthday' ? 'date' : 'text'}
+                                        type={
+                                            modal.type === 'birthday'
+                                                ? 'date'
+                                                : 'text'
+                                        }
                                         value={modal.value}
-                                        onChange={(e) => setModal({ ...modal, value: e.target.value })}
-                                        className="w-full border border-gray-200 rounded-md px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-green-500"
+                                        onChange={(e) =>
+                                            setModal({
+                                                ...modal,
+                                                value: e.target.value,
+                                            })
+                                        }
+                                        className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-green-500"
                                         placeholder={`Masukkan ${modal.title.split(' ').slice(1).join(' ')}...`}
                                     />
                                 )}
@@ -264,10 +326,10 @@ export default function BiodataTab() {
                                 type="button"
                                 onClick={handleSaveModal}
                                 disabled={!modal.value}
-                                className={`w-full py-2.5 rounded-md font-bold uppercase text-xs tracking-wider mt-4 transition-colors ${
+                                className={`mt-4 w-full rounded-md py-2.5 text-xs font-bold tracking-wider uppercase transition-colors ${
                                     modal.value
-                                        ? 'bg-green-500 text-white shadow-xs cursor-pointer hover:bg-green-600'
-                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        ? 'cursor-pointer bg-green-500 text-white shadow-xs hover:bg-green-600'
+                                        : 'cursor-not-allowed bg-gray-100 text-gray-400'
                                 }`}
                             >
                                 Simpan
@@ -279,21 +341,29 @@ export default function BiodataTab() {
 
             {/* Modal Buat Kata Sandi */}
             {passwordModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-[420px] rounded-lg shadow-xl p-6 relative">
+                <div className="fixed inset-0 z-50 flex animate-in items-center justify-center bg-black/50 p-4 duration-200 fade-in">
+                    <div className="relative w-full max-w-[420px] rounded-lg bg-white p-6 shadow-xl">
                         <button
                             type="button"
                             onClick={() => setPasswordModal(false)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
+                            className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-gray-600"
                         >
                             <X size={20} />
                         </button>
-                        <h2 className="text-base font-bold text-gray-800 mb-1">Buat Kata Sandi</h2>
-                        <p className="text-xs text-gray-500 mb-4">Gunakan kombinasi minimal 8 karakter untuk keamanan akun.</p>
+                        <h2 className="mb-1 text-base font-bold text-gray-800">
+                            Buat Kata Sandi
+                        </h2>
+                        <p className="mb-4 text-xs text-gray-500">
+                            Gunakan kombinasi minimal 8 karakter untuk keamanan
+                            akun.
+                        </p>
 
-                        <form onSubmit={handleSavePassword} className="space-y-3.5">
+                        <form
+                            onSubmit={handleSavePassword}
+                            className="space-y-3.5"
+                        >
                             <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                                     Kata Sandi Baru
                                 </label>
                                 <input
@@ -301,29 +371,40 @@ export default function BiodataTab() {
                                     required
                                     minLength={8}
                                     value={passwordForm.password}
-                                    onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-xs outline-none focus:border-green-500"
+                                    onChange={(e) =>
+                                        setPasswordForm({
+                                            ...passwordForm,
+                                            password: e.target.value,
+                                        })
+                                    }
+                                    className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs outline-none focus:border-green-500"
                                     placeholder="Minimal 8 karakter"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                                     Ulangi Kata Sandi
                                 </label>
                                 <input
                                     type="password"
                                     required
                                     value={passwordForm.password_confirmation}
-                                    onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-xs outline-none focus:border-green-500"
+                                    onChange={(e) =>
+                                        setPasswordForm({
+                                            ...passwordForm,
+                                            password_confirmation:
+                                                e.target.value,
+                                        })
+                                    }
+                                    className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs outline-none focus:border-green-500"
                                     placeholder="Ketik ulang kata sandi"
                                 />
                             </div>
 
                             <button
                                 type="submit"
-                                className="w-full py-2.5 bg-green-500 text-white rounded-md font-bold uppercase text-xs tracking-wider mt-4 hover:bg-green-600 cursor-pointer shadow-xs transition"
+                                className="mt-4 w-full cursor-pointer rounded-md bg-green-500 py-2.5 text-xs font-bold tracking-wider text-white uppercase shadow-xs transition hover:bg-green-600"
                             >
                                 Simpan Kata Sandi
                             </button>
@@ -334,21 +415,26 @@ export default function BiodataTab() {
 
             {/* Modal PIN Transaksi */}
             {pinModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-[420px] rounded-lg shadow-xl p-6 relative">
+                <div className="fixed inset-0 z-50 flex animate-in items-center justify-center bg-black/50 p-4 duration-200 fade-in">
+                    <div className="relative w-full max-w-[420px] rounded-lg bg-white p-6 shadow-xl">
                         <button
                             type="button"
                             onClick={() => setPinModal(false)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
+                            className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-gray-600"
                         >
                             <X size={20} />
                         </button>
-                        <h2 className="text-base font-bold text-gray-800 mb-1">Atur PIN 6 Digit</h2>
-                        <p className="text-xs text-gray-500 mb-4">PIN digunakan untuk mengamankan pembayaran & transaksi saldo.</p>
+                        <h2 className="mb-1 text-base font-bold text-gray-800">
+                            Atur PIN 6 Digit
+                        </h2>
+                        <p className="mb-4 text-xs text-gray-500">
+                            PIN digunakan untuk mengamankan pembayaran &
+                            transaksi saldo.
+                        </p>
 
                         <form onSubmit={handleSavePin} className="space-y-3.5">
                             <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                                     PIN Baru (6 Angka)
                                 </label>
                                 <input
@@ -357,14 +443,22 @@ export default function BiodataTab() {
                                     maxLength={6}
                                     pattern="\d{6}"
                                     value={pinForm.pin}
-                                    onChange={(e) => setPinForm({ ...pinForm, pin: e.target.value.replace(/\D/g, '') })}
-                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-center text-lg tracking-[0.4em] font-mono font-bold outline-none focus:border-green-500"
+                                    onChange={(e) =>
+                                        setPinForm({
+                                            ...pinForm,
+                                            pin: e.target.value.replace(
+                                                /\D/g,
+                                                '',
+                                            ),
+                                        })
+                                    }
+                                    className="w-full rounded-md border border-gray-200 px-3 py-2 text-center font-mono text-lg font-bold tracking-[0.4em] outline-none focus:border-green-500"
                                     placeholder="••••••"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                                     Konfirmasi PIN
                                 </label>
                                 <input
@@ -373,15 +467,24 @@ export default function BiodataTab() {
                                     maxLength={6}
                                     pattern="\d{6}"
                                     value={pinForm.pin_confirmation}
-                                    onChange={(e) => setPinForm({ ...pinForm, pin_confirmation: e.target.value.replace(/\D/g, '') })}
-                                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-center text-lg tracking-[0.4em] font-mono font-bold outline-none focus:border-green-500"
+                                    onChange={(e) =>
+                                        setPinForm({
+                                            ...pinForm,
+                                            pin_confirmation:
+                                                e.target.value.replace(
+                                                    /\D/g,
+                                                    '',
+                                                ),
+                                        })
+                                    }
+                                    className="w-full rounded-md border border-gray-200 px-3 py-2 text-center font-mono text-lg font-bold tracking-[0.4em] outline-none focus:border-green-500"
                                     placeholder="••••••"
                                 />
                             </div>
 
                             <button
                                 type="submit"
-                                className="w-full py-2.5 bg-green-500 text-white rounded-md font-bold uppercase text-xs tracking-wider mt-4 hover:bg-green-600 cursor-pointer shadow-xs transition"
+                                className="mt-4 w-full cursor-pointer rounded-md bg-green-500 py-2.5 text-xs font-bold tracking-wider text-white uppercase shadow-xs transition hover:bg-green-600"
                             >
                                 Aktifkan PIN
                             </button>
@@ -405,11 +508,11 @@ function InfoRow({
     onAction: () => void;
 }) {
     return (
-        <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-500 w-1/3 font-medium">{label}</span>
-            <div className="flex-1 flex items-center justify-between">
+        <div className="flex items-center justify-between text-xs">
+            <span className="w-1/3 font-medium text-gray-500">{label}</span>
+            <div className="flex flex-1 items-center justify-between">
                 <span
-                    className={`font-bold ${!value ? 'text-green-500 cursor-pointer hover:underline' : 'text-gray-800'}`}
+                    className={`font-bold ${!value ? 'cursor-pointer text-green-500 hover:underline' : 'text-gray-800'}`}
                     onClick={!value ? onAction : undefined}
                 >
                     {value || placeholder}
@@ -418,7 +521,7 @@ function InfoRow({
                     <button
                         type="button"
                         onClick={onAction}
-                        className="text-green-500 font-bold text-xs uppercase hover:underline ml-4 cursor-pointer"
+                        className="ml-4 cursor-pointer text-xs font-bold text-green-500 uppercase hover:underline"
                     >
                         Ubah
                     </button>
@@ -428,12 +531,20 @@ function InfoRow({
     );
 }
 
-function SecurityButton({ label, icon, onClick }: { label: string; icon?: ReactNode; onClick?: () => void }) {
+function SecurityButton({
+    label,
+    icon,
+    onClick,
+}: {
+    label: string;
+    icon?: ReactNode;
+    onClick?: () => void;
+}) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="w-full flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-200 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-50"
         >
             {icon} {label}
         </button>
