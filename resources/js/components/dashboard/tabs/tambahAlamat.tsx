@@ -1,20 +1,9 @@
 import { router } from '@inertiajs/react';
 import { Check, MapPin, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { Address } from '@/types';
 
-export interface Address {
-    id: number;
-    user_id?: number;
-    label: string;
-    receiver: string;
-    phone: string;
-    full_address: string;
-    note?: string | null;
-    pinpoint?: string;
-    is_main: boolean;
-    fullAddress?: string;
-    isMain?: boolean;
-}
+export type { Address };
 
 export interface AlamatTabProps {
     addresses?: Address[];

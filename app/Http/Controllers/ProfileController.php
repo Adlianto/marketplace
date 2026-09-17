@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,8 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ProfileController extends Controller
 {
@@ -36,13 +33,13 @@ class ProfileController extends Controller
         $user->fill(array_filter($validated, fn ($val) => ! is_null($val)));
         $user->save();
 
-        return redirect()->route('profile.edit')->with('status', 'Profil berhasil diperbarui!');
+        return back()->with('status', 'Profil berhasil diperbarui!');
     }
 
     public function updateAvatar(Request $request): RedirectResponse
     {
         $request->validate([
-            'avatar' => 'required|file|max:10240',
+            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ]);
 
         /** @var User $user */
@@ -92,21 +89,5 @@ class ProfileController extends Controller
         ]);
 
         return back()->with('status', 'PIN transaksi berhasil disimpan!');
-    }
-
-    public function show(int|string $id): Response
-    {
-        /** @var Product $product */
-        $product = Product::findOrFail($id);
-
-        $relatedProducts = Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
-            ->take(5)
-            ->get();
-
-        return Inertia::render('product/show', [
-            'product' => $product,
-            'relatedProducts' => $relatedProducts,
-        ]);
     }
 }

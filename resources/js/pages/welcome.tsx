@@ -10,39 +10,13 @@ import {
 } from 'react';
 import Navbar from '@/components/navbar';
 import ProductSkeleton from '@/components/productSkeleton';
+import type { Category, PaginatedData, Product } from '@/types';
 
 const Footer = lazy(() => import('@/components/footer'));
 
-interface ProductItem {
-    id: number;
-    title: string;
-    slug: string;
-    price: number | string;
-    original_price: number | string | null;
-    discount: number | null;
-    city: string;
-    rating: number | string;
-    sold_count: string;
-    image: string;
-}
-
-interface CategoryItem {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface PaginatedData<T> {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    next_page_url: string | null;
-    total: number;
-}
-
 interface WelcomeProps {
-    products: PaginatedData<ProductItem>;
-    categories: CategoryItem[];
+    products: PaginatedData<Product>;
+    categories: Category[];
     filters: {
         search: string;
         category: string;
@@ -92,7 +66,7 @@ export default function Welcome({
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [copiedId, setCopiedId] = useState<number | null>(null);
 
-    const [allProducts, setAllProducts] = useState<ProductItem[]>(
+    const [allProducts, setAllProducts] = useState<Product[]>(
         products?.data || [],
     );
     const [nextPageUrl, setNextPageUrl] = useState<string | null>(
@@ -216,7 +190,7 @@ export default function Welcome({
                 only: ['products'],
                 onSuccess: (page) => {
                     const newProductsData = page.props
-                        .products as PaginatedData<ProductItem>;
+                        .products as PaginatedData<Product>;
 
                     setTimeout(() => {
                         setAllProducts((prev) => [

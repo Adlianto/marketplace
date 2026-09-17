@@ -4,31 +4,22 @@ import { lazy, Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
-import type { Address } from './tab/tambahAlamat';
+import type { Address, User } from '@/types';
 
-export { resetForm } from './tab/tambahAlamat';
-
-const BiodataTab = lazy(() => import('./tab/biodata'));
-const AlamatTab = lazy(() => import('./tab/tambahAlamat'));
-const PembayaranTab = lazy(() => import('./tab/pembayaran'));
-const RekeningTab = lazy(() => import('./tab/rekeningBank'));
-const NotifikasiTab = lazy(() => import('./tab/notifikasi'));
-const TampilanTab = lazy(() => import('./tab/personalisasi'));
-const KeamananTab = lazy(() => import('./tab/keamanan'));
-
-interface UserAuth {
-    id: number;
-    name: string;
-    email: string;
-    avatar?: string;
-}
+const BiodataTab = lazy(() => import('@/components/dashboard/tabs/biodata'));
+const AlamatTab = lazy(() => import('@/components/dashboard/tabs/tambahAlamat'));
+const PembayaranTab = lazy(() => import('@/components/dashboard/tabs/pembayaran'));
+const RekeningTab = lazy(() => import('@/components/dashboard/tabs/rekeningBank'));
+const NotifikasiTab = lazy(() => import('@/components/dashboard/tabs/notifikasi'));
+const TampilanTab = lazy(() => import('@/components/dashboard/tabs/personalisasi'));
+const KeamananTab = lazy(() => import('@/components/dashboard/tabs/keamanan'));
 
 interface DashboardProps {
     addresses?: Address[];
 }
 
 export default function Dashboard({ addresses = [] }: DashboardProps) {
-    const { auth } = usePage().props as { auth: { user: UserAuth | null } };
+    const { auth } = usePage().props as unknown as { auth: { user: User | null } };
     const user = auth.user;
 
     const defaultAvatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'Bell'}`;

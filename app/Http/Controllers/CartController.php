@@ -80,6 +80,10 @@ class CartController extends Controller
         /** @var Cart $cart */
         $cart = Cart::findOrFail($id);
 
+        if ($cart->user_id !== Auth::id()) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
         if ($request->has('quantity')) {
             $cart->update(['quantity' => max(1, (int) $request->quantity)]);
         }
@@ -106,6 +110,11 @@ class CartController extends Controller
     {
         /** @var Cart $cart */
         $cart = Cart::findOrFail($id);
+
+        if ($cart->user_id !== Auth::id()) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
         $cart->delete();
 
         return back();

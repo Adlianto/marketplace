@@ -16,12 +16,24 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { dashboard, login, register } from '@/routes';
+import type { User } from '@/types';
 
 interface CartPreviewItem {
     id: number;
     title: string;
     price: number | string;
     image: string;
+}
+
+interface SharedPageProps {
+    auth?: {
+        user: User | null;
+    };
+    cart?: {
+        count?: number;
+        preview?: CartPreviewItem[];
+    };
+    [key: string]: unknown;
 }
 
 interface NavbarProps {
@@ -53,13 +65,13 @@ export default function Navbar({
     messageCount = 0,
     shopLogo,
 }: NavbarProps) {
-    const page = usePage();
-    const pageProps = page && page.props ? (page.props as any) : {};
+    const page = usePage<SharedPageProps>();
+    const pageProps = page?.props || {};
 
     // Proteksi data cart agar selalu berupa array/angka valid
-    const sharedCartCount = Number(pageProps?.cart?.count) || 0;
+    const sharedCartCount = Number(pageProps.cart?.count) || 0;
     const sharedCartPreview: CartPreviewItem[] = Array.isArray(
-        pageProps?.cart?.preview,
+        pageProps.cart?.preview,
     )
         ? pageProps.cart.preview
         : [];
@@ -71,7 +83,7 @@ export default function Navbar({
             ? propCartPreview
             : sharedCartPreview;
 
-    const auth = pageProps?.auth || { user: null };
+    const auth = pageProps.auth || { user: null };
     const [localQuery, setLocalQuery] = useState(searchQuery || '');
     const defaultAvatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${auth.user?.name || 'Bell'}`;
 
