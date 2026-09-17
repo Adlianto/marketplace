@@ -4,8 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Models\Cart;
 use Illuminate\Http\Request;
-use Inertia\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -43,7 +43,7 @@ class HandleInertiaRequests extends Middleware
 
         try {
             $cartQuery = Cart::with('product')
-                ->when($userId, fn($q) => $q->where('user_id', $userId))
+                ->when($userId, fn ($q) => $q->where('user_id', $userId))
                 ->latest();
 
             $cartCount = (clone $cartQuery)->count();

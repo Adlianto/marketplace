@@ -1,11 +1,16 @@
 <?php
 
-use App\Http\Controllers\HomeController;
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Auth\SocialiteController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -25,17 +30,28 @@ Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCa
 
 // Dashboard & Profile Routes (Auth)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', function (): Response {
+        /** @var User $user */
+        $user = Auth::user();
+
+        return Inertia::render('dashboard', [
+            'addresses' => $user->addresses()->latest()->get(),
+        ]);
+    })->name('dashboard');
 
     // Route Profile & Biodata
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.info.update');
 
     // Route Custom Avatar, Password & PIN
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     Route::post('/profile/password', [ProfileController::class, 'setPassword'])->name('profile.password');
     Route::post('/profile/pin', [ProfileController::class, 'setPin'])->name('profile.pin');
+
+    // Route Alamat
+    Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
+    Route::patch('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
+    Route::delete('/addresses/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
+    Route::patch('/addresses/{address}/set-main', [AddressController::class, 'setMain'])->name('addresses.setMain');
 });
 
 if (file_exists(__DIR__.'/settings.php')) {

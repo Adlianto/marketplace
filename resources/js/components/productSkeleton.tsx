@@ -1,23 +1,23 @@
 export default function ProductSkeleton() {
     return (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs animate-pulse flex flex-col justify-between">
+        <div className="flex animate-pulse flex-col justify-between overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs">
             <div>
                 <div className="aspect-square bg-slate-200" />
 
-                <div className="p-2.5 space-y-2">
-                    <div className="h-3 bg-slate-200 rounded w-full" />
-                    <div className="h-3 bg-slate-200 rounded w-3/4" />
-                    <div className="h-4 bg-slate-200 rounded w-1/2 mt-2" />
+                <div className="space-y-2 p-2.5">
+                    <div className="h-3 w-full rounded bg-slate-200" />
+                    <div className="h-3 w-3/4 rounded bg-slate-200" />
+                    <div className="mt-2 h-4 w-1/2 rounded bg-slate-200" />
                     <div className="flex gap-2 pt-1">
-                        <div className="h-3 bg-slate-200 rounded w-8" />
-                        <div className="h-3 bg-slate-200 rounded w-16" />
+                        <div className="h-3 w-8 rounded bg-slate-200" />
+                        <div className="h-3 w-16 rounded bg-slate-200" />
                     </div>
                 </div>
             </div>
 
-            <div className="px-2.5 pb-2.5 pt-2 flex items-center justify-between border-t border-slate-100">
-                <div className="h-3 bg-slate-200 rounded w-14" />
-                <div className="h-5 w-5 bg-slate-200 rounded-md" />
+            <div className="flex items-center justify-between border-t border-slate-100 px-2.5 pt-2 pb-2.5">
+                <div className="h-3 w-14 rounded bg-slate-200" />
+                <div className="h-5 w-5 rounded-md bg-slate-200" />
             </div>
         </div>
     );
