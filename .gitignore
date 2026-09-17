@@ -19,6 +19,7 @@
 .phpunit.result.cache
 struktur.md
 lint-tasks.md
+phpstan-tasks.md
 Homestead.json
 Homestead.yaml
 npm-debug.log

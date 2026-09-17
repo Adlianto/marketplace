@@ -4,18 +4,20 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Exception;
+use Illuminate\Http\RedirectResponse as LaravelRedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use Exception;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class SocialiteController extends Controller
 {
-    public function redirectToGoogle()
+    public function redirectToGoogle(): RedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(): LaravelRedirectResponse
     {
         try {
             $googleUser = Socialite::driver('google')->user();
