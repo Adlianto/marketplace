@@ -1,10 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useState, type ReactNode } from 'react';
 import { CheckCircle2, LogOut, ChevronDown } from 'lucide-react';
-import Navbar from '@/components/navbar';
+import type {ReactNode} from 'react';
+import { useState  } from 'react';
+import { lazy } from 'react';
 import Footer from '@/components/footer';
+import Navbar from '@/components/navbar';
 
-import { lazy, Suspense } from 'react';
 
 const BiodataTab = lazy(() => import('./tab/biodata'));
 const AlamatTab = lazy(() => import('./tab/tambahAlamat'));
@@ -30,13 +31,16 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const savedTab = localStorage.getItem('active_account_tab');
+
       return savedTab || 'biodatadiri';
     }
+
     return 'biodatadiri';
   });
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('active_account_tab', tabId);
     }

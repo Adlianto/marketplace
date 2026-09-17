@@ -1,6 +1,6 @@
 import { Head, Link, router, useRemember } from '@inertiajs/react';
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { MoreHorizontal, ShoppingCart, Share2, Check } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import Navbar from '@/components/navbar';
 import ProductSkeleton from '@/components/productSkeleton';
 
@@ -65,6 +65,7 @@ const TOPUP_TABS = ['Pulsa', 'Paket Data', 'Listrik PLN', 'Roaming'];
 
 const formatRupiah = (val: number | string) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
+
     return new Intl.NumberFormat('id-ID').format(num || 0);
 };
 
@@ -91,10 +92,12 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
     useEffect(() => {
         const handleClickOutside = () => setOpenMenuId(null);
         window.addEventListener('click', handleClickOutside);
+
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAllProducts(products?.data || []);
         setNextPageUrl(products?.next_page_url || null);
     }, [products]);
@@ -103,11 +106,14 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
         const timer = setInterval(() => {
             setActiveBanner((prev) => (prev + 1) % BANNERS.length);
         }, 5000);
+
         return () => clearInterval(timer);
     }, []);
 
     useEffect(() => {
-        if (hasAutoScrolled || isLoading || allProducts.length <= 12) return;
+        if (hasAutoScrolled || isLoading || allProducts.length <= 12) {
+            return;
+        }
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -128,6 +134,7 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
         }
 
         return () => observer.disconnect();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hasAutoScrolled, isLoading, allProducts]);
 
     const handleCategoryChange = (slug: string) => {
@@ -156,10 +163,14 @@ export default function Welcome({ products, categories, filters }: WelcomeProps)
         }, 400);
 
         return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
 
     const handleLoadMore = () => {
-        if (!nextPageUrl || isLoadingMore) return;
+
+        if (!nextPageUrl || isLoadingMore) {
+            return;
+        }
 
         setIsLoadingMore(true);
 

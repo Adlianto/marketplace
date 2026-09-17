@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Sun, Moon, Monitor, Palette, Check } from 'lucide-react';
+import { useState } from 'react';
 
 export default function TampilanTab() {
     const [themeMode, setThemeMode] = useState('light');

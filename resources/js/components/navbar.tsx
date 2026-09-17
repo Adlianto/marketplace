@@ -1,6 +1,4 @@
 import { Link, usePage } from '@inertiajs/react';
-import { dashboard, login, register } from '@/routes';
-import { useState } from 'react';
 import {
     ShoppingCart,
     Bell,
@@ -16,6 +14,8 @@ import {
     Heart,
     ShoppingBag,
 } from 'lucide-react';
+import { useState } from 'react';
+import { dashboard, login, register } from '@/routes';
 
 interface CartPreviewItem {
     id: number;
@@ -36,6 +36,7 @@ interface NavbarProps {
 
 const formatRupiah = (val: number | string) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
+
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -70,7 +71,10 @@ export default function Navbar({
 
     const handleInputChange = (val: string) => {
         setLocalQuery(val);
-        if (onSearchChange) onSearchChange(val);
+
+        if (onSearchChange) {
+onSearchChange(val);
+}
     };
 
     return (

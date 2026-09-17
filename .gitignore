@@ -18,6 +18,7 @@
 .phpactor.json
 .phpunit.result.cache
 struktur.md
+lint-tasks.md
 Homestead.json
 Homestead.yaml
 npm-debug.log

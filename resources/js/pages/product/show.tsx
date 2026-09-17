@@ -1,15 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import {
     Star,
-    ShieldCheck,
-    Truck,
     Heart,
     Share2,
     Minus,
     Plus,
     ShoppingCart,
-    Store,
     MessageCircle,
     Check,
     ThumbsUp,
@@ -20,8 +16,10 @@ import {
     ChevronRight,
     MoreHorizontal
 } from 'lucide-react';
-import Navbar from '@/components/navbar';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import Footer from '@/components/footer';
+import Navbar from '@/components/navbar';
 import ProductSkeleton from '@/components/productSkeleton';
 
 interface Review {
@@ -79,7 +77,10 @@ function LazySection({ children, minHeight = '400px' }: { children: ReactNode; m
             { rootMargin: '300px' }
         );
 
-        if (ref.current) observer.observe(ref.current);
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+
         return () => observer.disconnect();
     }, []);
 
@@ -110,8 +111,13 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
     
     const observer = useRef<IntersectionObserver | null>(null);
     const observerTarget = useCallback((node: HTMLDivElement | null) => {
-        if (isLoadingRelated) return;
-        if (observer.current) observer.current.disconnect();
+        if (isLoadingRelated) {
+            return;
+        }
+
+        if (observer.current) {
+            observer.current.disconnect();
+        }
         
         observer.current = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && relatedProducts && visibleRelated < relatedProducts.length) {
@@ -123,16 +129,20 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
             }
         });
         
-        if (node) observer.current.observe(node);
+        if (node) {
+            observer.current.observe(node);
+        }
     }, [isLoadingRelated, visibleRelated, relatedProducts]);
 
     useEffect(() => {
         const handleClickOutside = () => setOpenMenuId(null);
         window.addEventListener('click', handleClickOutside);
+
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveImage(product?.image || 'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80');
     }, [product]);
 
@@ -142,6 +152,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         } else {
             document.body.style.overflow = 'unset';
         }
+
         return () => {
             document.body.style.overflow = 'unset';
         };
@@ -149,6 +160,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
 
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
+
         if (element) {
             const y = element.getBoundingClientRect().top + window.scrollY - 120;
             window.scrollTo({ top: y, behavior: 'smooth' });
@@ -179,8 +191,11 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
     };
 
     const handleQuantityChange = (type: 'inc' | 'dec') => {
-        if (type === 'inc' && quantity < stock) setQuantity(quantity + 1);
-        else if (type === 'dec' && quantity > 1) setQuantity(quantity - 1);
+        if (type === 'inc' && quantity < stock) {
+            setQuantity(quantity + 1);
+        } else if (type === 'dec' && quantity > 1) {
+            setQuantity(quantity - 1);
+        }
     };
 
     const handleAddMainToCart = () => {
@@ -247,7 +262,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
         <div className="min-h-screen flex flex-col bg-white text-slate-800 font-sans antialiased relative">
             <Head title={product?.title || 'Detail Produk'} />
 
-            {/* Modal preview gambar penuh */}
+            {/* Modal preview gambar */}
             {modalData && (
                 <div 
                     className="fixed inset-0 z-[100] h-screen w-screen bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 select-none"
@@ -357,7 +372,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                     <div className="flex items-center gap-3 text-[13px] text-slate-600 mt-2">
                                         <span>Terjual <strong className="text-slate-900">{sold}</strong></span>
                                         <span className="text-slate-300">•</span>
-                                        <button onClick={() => scrollToSection('ulasan')} className="flex items-center gap-1 hover:text-[#03ac0e] transition cursor-pointer">
+                                        <button type="button" onClick={() => scrollToSection('ulasan')} className="flex items-center gap-1 hover:text-[#03ac0e] transition cursor-pointer">
                                             <Star size={14} className="fill-amber-400 text-amber-400" />
                                             <strong className="text-slate-900">{ratingDisplay}</strong> ({reviewsCount} rating)
                                         </button>
@@ -369,8 +384,8 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                 </div>
 
                                 <div className="flex gap-6 border-b border-slate-200 text-[13px] font-bold">
-                                    <button onClick={() => setActiveTab('detail')} className={`pb-2.5 border-b-2 cursor-pointer transition ${activeTab === 'detail' ? 'border-[#03ac0e] text-[#03ac0e]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>Detail Produk</button>
-                                    <button onClick={() => setActiveTab('spesifikasi')} className={`pb-2.5 border-b-2 cursor-pointer transition ${activeTab === 'spesifikasi' ? 'border-[#03ac0e] text-[#03ac0e]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>Spesifikasi</button>
+                                    <button type="button" onClick={() => setActiveTab('detail')} className={`pb-2.5 border-b-2 cursor-pointer transition ${activeTab === 'detail' ? 'border-[#03ac0e] text-[#03ac0e]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>Detail Produk</button>
+                                    <button type="button" onClick={() => setActiveTab('spesifikasi')} className={`pb-2.5 border-b-2 cursor-pointer transition ${activeTab === 'spesifikasi' ? 'border-[#03ac0e] text-[#03ac0e]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>Spesifikasi</button>
                                 </div>
 
                                 <div id="detail" className="text-sm text-slate-700 leading-relaxed space-y-3 pt-2 scroll-mt-24">
@@ -433,7 +448,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                             <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 border-b border-slate-200">Filter Ulasan</div>
                                             <div className="divide-y divide-slate-100">
                                                 {['Media', 'Rating', 'Topik Ulasan'].map((filter) => (
-                                                    <button key={filter} className="w-full px-4 py-3 text-[13px] font-bold text-slate-800 flex justify-between items-center hover:bg-slate-50 transition cursor-pointer">
+                                                    <button key={filter} type="button" className="w-full px-4 py-3 text-[13px] font-bold text-slate-800 flex justify-between items-center hover:bg-slate-50 transition cursor-pointer">
                                                         {filter} <ChevronDown size={14} className="text-slate-400" />
                                                     </button>
                                                 ))}
@@ -467,7 +482,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Ulasan Pilihan</h3>
                                                 <div className="flex items-center gap-2 text-[13px]">
                                                     <span className="text-slate-500">Urutkan</span>
-                                                    <button className="border border-slate-300 rounded-md px-3 py-1.5 font-bold flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition">
+                                                    <button type="button" className="border border-slate-300 rounded-md px-3 py-1.5 font-bold flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition">
                                                         Paling Membantu <ChevronDown size={14} />
                                                     </button>
                                                 </div>
@@ -479,6 +494,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                                         const reviewDate = new Date(rev.created_at).toLocaleDateString('id-ID', {
                                                             day: 'numeric', month: 'long', year: 'numeric'
                                                         });
+
                                                         return (
                                                             <div key={rev.id} className="border-b border-slate-100 pb-6">
                                                                 <div className="flex justify-between items-start mb-2">
@@ -501,10 +517,10 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                                                     {rev.comment}
                                                                 </p>
                                                                 <div className="flex items-center justify-between text-slate-400">
-                                                                    <button className="flex items-center gap-1.5 text-[11px] font-bold hover:text-[#03ac0e] transition cursor-pointer">
+                                                                    <button type="button" className="flex items-center gap-1.5 text-[11px] font-bold hover:text-[#03ac0e] transition cursor-pointer">
                                                                         <ThumbsUp size={14} /> Membantu
                                                                     </button>
-                                                                    <button className="hover:text-slate-600 transition cursor-pointer">
+                                                                    <button type="button" className="hover:text-slate-600 transition cursor-pointer">
                                                                         <MoreVertical size={16} />
                                                                     </button>
                                                                 </div>
@@ -529,13 +545,13 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
 
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center border border-slate-300 rounded-lg p-1 w-fit">
-                                    <button onClick={() => handleQuantityChange('dec')} disabled={quantity <= 1} className="p-1 text-slate-500 hover:text-[#03ac0e] disabled:opacity-30 cursor-pointer transition">
+                                    <button type="button" onClick={() => handleQuantityChange('dec')} disabled={quantity <= 1} className="p-1 text-slate-500 hover:text-[#03ac0e] disabled:opacity-30 cursor-pointer transition">
                                         <Minus size={16} />
                                     </button>
                                     <span className="w-12 text-center text-sm font-bold text-slate-900">
                                         {quantity}
                                     </span>
-                                    <button onClick={() => handleQuantityChange('inc')} disabled={quantity >= stock} className="p-1 text-[#03ac0e] hover:text-emerald-700 disabled:opacity-30 cursor-pointer transition">
+                                    <button type="button" onClick={() => handleQuantityChange('inc')} disabled={quantity >= stock} className="p-1 text-[#03ac0e] hover:text-emerald-700 disabled:opacity-30 cursor-pointer transition">
                                         <Plus size={16} />
                                     </button>
                                 </div>
@@ -552,8 +568,8 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             </div>
 
                             <div className="space-y-2.5 pt-2">
-                                {/* Tombol Tambah ke Keranjang Database */}
                                 <button 
+                                    type="button"
                                     onClick={handleAddMainToCart}
                                     disabled={isAddingToCart}
                                     className="w-full py-2.5 bg-[#03ac0e] text-white rounded-lg text-[13px] font-extrabold hover:bg-[#029b0c] transition cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
@@ -570,17 +586,17 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                             </div>
 
                             <div className="pt-2 flex items-center justify-between text-[13px] font-bold text-slate-600 border-t border-slate-100">
-                                <button className="flex items-center gap-1.5 hover:text-[#03ac0e] cursor-pointer py-2 transition">
+                                <button type="button" className="flex items-center gap-1.5 hover:text-[#03ac0e] cursor-pointer py-2 transition">
                                     <MessageCircle size={16} /> Chat
                                 </button>
                                 <div className="w-px h-4 bg-slate-200"></div>
-                                <button onClick={() => setIsWishlist(!isWishlist)} className={`flex items-center gap-1.5 cursor-pointer py-2 transition ${isWishlist ? 'text-[#ef144a]' : 'hover:text-[#ef144a]'}`}>
+                                <button type="button" onClick={() => setIsWishlist(!isWishlist)} className={`flex items-center gap-1.5 cursor-pointer py-2 transition ${isWishlist ? 'text-[#ef144a]' : 'hover:text-[#ef144a]'}`}>
                                     <Heart size={16} className={isWishlist ? 'fill-current' : ''} /> Wishlist
                                 </button>
                                 <div className="w-px h-4 bg-slate-200"></div>
                                 
-                                {/* Tombol Share Produk */}
                                 <button 
+                                    type="button"
                                     onClick={handleShareMain} 
                                     className={`flex items-center gap-1.5 cursor-pointer py-2 transition ${isCopiedMain ? 'text-[#03ac0e]' : 'hover:text-[#03ac0e]'}`}
                                 >
@@ -593,7 +609,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
 
                 </div>
 
-                {/* Bagian rekomendasi produk di toko ini dengan menu titik tiga */}
+                {/* Bagian rekomendasi produk */}
                 <div id="rekomendasi" className="mt-16 pt-8 border-t border-slate-200 scroll-mt-24">
                     <LazySection minHeight="400px">
                         <div className="flex justify-between items-center mb-6">
@@ -602,7 +618,7 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                            {(relatedProducts && relatedProducts.length > 0 ? relatedProducts : []).slice(0, visibleRelated).map((rel: any, idx) => {
+                            {(relatedProducts && relatedProducts.length > 0 ? relatedProducts : []).slice(0, visibleRelated).map((rel: ProductItem, idx) => {
                                 const isMenuOpen = openMenuId === rel.id;
                                 const isCopied = copiedId === rel.id;
 
@@ -657,7 +673,6 @@ export default function ProductShow({ product, relatedProducts }: ProductShowPro
                                                     <span className="text-[10.5px]">{rel?.sold_count || '10+'} terjual</span>
                                                 </div>
 
-                                                {/* Transisi slide nama toko ke lokasi & tombol menu titik tiga */}
                                                 <div className="flex items-center gap-1 text-[11px] pt-1.5 border-t border-slate-100 relative">
                                                     <div className="h-4 overflow-hidden relative flex-1 text-slate-500">
                                                         <div className="transition-transform duration-200 ease-out group-hover:-translate-y-4">

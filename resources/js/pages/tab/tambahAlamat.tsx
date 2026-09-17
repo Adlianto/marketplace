@@ -1,5 +1,5 @@
+import { MapPin, X, Search, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { MapPin, Plus, X, Search, Crosshair, ChevronLeft, Check, Share2, Map, Trash2, Loader2 } from 'lucide-react';
 
 interface Address {
     id: number;
@@ -16,6 +16,7 @@ export default function AlamatTab() {
     const [addresses, setAddresses] = useState<Address[]>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('marketku_addresses');
+
             return saved ? JSON.parse(saved) : [
                 {
                     id: 1,
@@ -28,15 +29,12 @@ export default function AlamatTab() {
                 }
             ];
         }
+
         return [];
     });
 
     const [modalOpen, setModalOpen] = useState(false);
-    const [step, setStep] = useState(1);
     const [editId, setEditId] = useState<number | null>(null);
-    const [searchKeyword, setSearchKeyword] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
 
     const [formData, setFormData] = useState({
         label: '',
@@ -57,7 +55,6 @@ export default function AlamatTab() {
         if (address) {
             setEditId(address.id);
             setFormData({ ...address, note: address.note || '', termsAccepted: true });
-            setStep(3);
         } else {
             setEditId(null);
             setFormData({
@@ -70,16 +67,15 @@ export default function AlamatTab() {
                 isMain: false,
                 termsAccepted: false,
             });
-            setStep(1);
-            setSearchKeyword('');
-            setSearchResults([]);
         }
+
         setModalOpen(true);
     };
 
     const handleSave = () => {
         if (!formData.label || !formData.receiver || !formData.fullAddress || !formData.phone) {
             alert('Harap isi Label, Nama Penerima, Nomor HP, dan Alamat Lengkap.');
+
             return;
         }
 
@@ -119,6 +115,7 @@ export default function AlamatTab() {
                     />
                 </div>
                 <button
+                    type="button"
                     onClick={() => handleOpenModal()}
                     className="bg-[#03ac0e] text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[#029b0c] transition cursor-pointer shadow-xs"
                 >
@@ -158,6 +155,7 @@ export default function AlamatTab() {
 
                                 <div className="flex items-center gap-3 text-xs">
                                     <button
+                                        type="button"
                                         onClick={() => handleOpenModal(addr)}
                                         className="font-semibold text-[#03ac0e] hover:underline cursor-pointer"
                                     >
@@ -165,6 +163,7 @@ export default function AlamatTab() {
                                     </button>
                                     <span className="text-slate-200">|</span>
                                     <button
+                                        type="button"
                                         onClick={() => deleteAddress(addr.id)}
                                         className="font-semibold text-slate-400 hover:text-red-500 cursor-pointer"
                                     >
@@ -178,6 +177,7 @@ export default function AlamatTab() {
                                     <Check size={20} className="text-[#03ac0e]" strokeWidth={2.5} />
                                 ) : (
                                     <button
+                                        type="button"
                                         onClick={() => setMainAddress(addr.id)}
                                         className="border border-slate-300 text-slate-600 hover:border-[#03ac0e] hover:text-[#03ac0e] px-3 py-1 rounded-lg text-xs font-semibold bg-white transition cursor-pointer"
                                     >
@@ -199,6 +199,7 @@ export default function AlamatTab() {
                                 {editId ? 'Ubah Alamat' : 'Tambah Alamat Baru'}
                             </h2>
                             <button
+                                type="button"
                                 onClick={() => setModalOpen(false)}
                                 className="text-slate-400 hover:text-slate-600 cursor-pointer"
                             >
@@ -261,6 +262,7 @@ export default function AlamatTab() {
                             </label>
 
                             <button
+                                type="button"
                                 onClick={handleSave}
                                 className="w-full bg-[#03ac0e] text-white font-semibold py-2.5 rounded-lg hover:bg-[#029b0c] transition cursor-pointer text-xs mt-2"
                             >

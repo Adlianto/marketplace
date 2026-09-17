@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, Trash2, ArrowDownToLine, X, Cpu, Link2 } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
+import { X}  from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface Wallet {
     id: string;
@@ -30,6 +30,7 @@ export default function PembayaranTab() {
     const [wallets, setWallets] = useState<Wallet[]>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('marketku_wallets');
+
             return saved ? JSON.parse(saved) : [
                 { id: 'gopay', name: 'GoPay', balance: 150000, connected: true, provider: 'gopay' },
                 { id: 'dana', name: 'DANA', balance: 50000, connected: true, provider: 'dana' },
@@ -37,17 +38,20 @@ export default function PembayaranTab() {
                 { id: 'shopeepay', name: 'ShopeePay', balance: 0, connected: false, provider: 'shopeepay' },
             ];
         }
+
         return [];
     });
 
     const [cards, setCards] = useState<Card[]>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('marketku_cards');
+
             return saved ? JSON.parse(saved) : [
                 { id: 1, type: 'VISA', bank: 'BANK BCA', card_number: '•••• •••• •••• 4567', expiry_date: '12/28', balance: 2500000, color: 'from-[#193278] to-[#0A1742]' },
                 { id: 2, type: 'Mastercard', bank: 'BANK MANDIRI', card_number: '•••• •••• •••• 8899', expiry_date: '09/27', balance: 1200000, color: 'from-[#1E232E] to-[#0E1116]' },
             ];
         }
+
         return [];
     });
 
@@ -75,12 +79,6 @@ export default function PembayaranTab() {
         setWallets(wallets.map((w) => (w.id === id ? { ...w, connected: !w.connected } : w)));
     };
 
-    const removeCard = (id: number) => {
-        if (confirm('Hapus kartu ini dari daftar simpanan?')) {
-            setCards(cards.filter((c) => c.id !== id));
-        }
-    };
-
     const handleOpenTopUp = (type: string, item: any) => {
         setTopUpModal({ open: true, type, id: item.id, name: item.name || `${item.bank} (${item.type})` });
         setTopUpAmount('');
@@ -88,7 +86,10 @@ export default function PembayaranTab() {
 
     const handleProcessTopUp = () => {
         const amount = parseInt(topUpAmount.replace(/[^0-9]/g, ''), 10);
-        if (!amount || amount <= 0) return alert('Masukkan nominal yang valid!');
+
+        if (!amount || amount <= 0) {
+return alert('Masukkan nominal yang valid!');
+}
 
         if (topUpModal.type === 'wallet') {
             setWallets(wallets.map((w) => (w.id === topUpModal.id ? { ...w, balance: w.balance + amount } : w)));

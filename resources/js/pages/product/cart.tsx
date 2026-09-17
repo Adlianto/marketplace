@@ -1,5 +1,4 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
     Trash2, 
     Minus, 
@@ -12,8 +11,9 @@ import {
     ShoppingCart,
     Share2
 } from 'lucide-react';
-import Navbar from '@/components/navbar';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Footer from '@/components/footer';
+import Navbar from '@/components/navbar';
 
 interface CartItem {
     id: number;
@@ -49,6 +49,7 @@ interface CartProps {
 
 const formatRupiah = (val: number | string | null | undefined) => {
     const num = typeof val === 'string' ? parseFloat(val) : Number(val);
+
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -104,10 +105,12 @@ export default function Cart({
     useEffect(() => {
         const handleClickOutside = () => setOpenMenuId(null);
         window.addEventListener('click', handleClickOutside);
+
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCartItems((Array.isArray(initialCartItems) ? initialCartItems : []).map(item => ({ 
             ...item, 
             selected: item.selected ?? true 
@@ -169,13 +172,21 @@ export default function Cart({
 
     const handleQuantityChange = (id: number, type: 'inc' | 'dec') => {
         const item = cartItems.find((i) => i.id === id);
-        if (!item) return;
+
+        if (!item) {
+            return;
+        }
 
         let nextQty = Number(item.quantity) || 1;
         const maxStock = Number(item.stock) || 99;
 
-        if (type === 'inc' && nextQty < maxStock) nextQty += 1;
-        if (type === 'dec' && nextQty > 1) nextQty -= 1;
+        if (type === 'inc' && nextQty < maxStock) {
+            nextQty += 1;
+        }
+
+        if (type === 'dec' && nextQty > 1) {
+            nextQty -= 1;
+        }
 
         if (nextQty !== item.quantity) {
             setCartItems((prev) =>
@@ -200,7 +211,10 @@ export default function Cart({
     };
 
     const confirmDeleteSelected = () => {
-        if (selectedCount === 0) return;
+        if (selectedCount === 0) {
+            return;
+        }
+
         setDeleteModal({
             isOpen: true,
             type: 'selected',
@@ -247,6 +261,7 @@ export default function Cart({
         e.stopPropagation();
         e.preventDefault();
         const productUrl = `${window.location.origin}/products/${productId}`;
+
         if (navigator.clipboard) {
             navigator.clipboard.writeText(productUrl);
             setCopiedId(productId);
@@ -580,7 +595,7 @@ export default function Cart({
                 )}
             </main>
 
-            {/* Modal Dialog Konfirmasi Hapus Clone Persis Tokopedia */}
+            {/* Modal Dialog Konfirmasi Hapus */}
             {deleteModal.isOpen && (
                 <div 
                     onClick={() => setDeleteModal({ isOpen: false, type: 'single', count: 1 })}
@@ -590,7 +605,6 @@ export default function Cart({
                         onClick={(e) => e.stopPropagation()}
                         className="w-full max-w-[420px] bg-white rounded-lg p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-150 text-center"
                     >
-                        {/* Judul Modal Bersih & Tegas */}
                         <div className="space-y-2">
                             <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                                 Hapus {deleteModal.count} produk?
@@ -600,7 +614,6 @@ export default function Cart({
                             </p>
                         </div>
 
-                        {/* Dua Tombol Aksi Khas Tokopedia */}
                         <div className="flex items-center justify-center gap-3 pt-2">
                             <button
                                 type="button"

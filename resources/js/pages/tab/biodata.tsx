@@ -1,6 +1,7 @@
-import { useState, useRef, type ReactNode } from 'react';
-import { Camera, Lock, Fingerprint, X, KeyRound, ShieldCheck } from 'lucide-react';
 import { usePage, router } from '@inertiajs/react';
+import { Camera, Lock, Fingerprint, X, KeyRound } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useState, useRef } from 'react';
 
 interface UserAuth {
     name?: string;
@@ -38,10 +39,13 @@ export default function BiodataTab() {
 
     const handleSavePassword = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (passwordForm.password !== passwordForm.password_confirmation) {
             alert('Konfirmasi kata sandi tidak cocok!');
+
             return;
         }
+
         router.post('/profile/password', passwordForm, {
             preserveScroll: true,
             onSuccess: () => {
@@ -54,14 +58,19 @@ export default function BiodataTab() {
 
     const handleSavePin = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (pinForm.pin.length !== 6) {
             alert('PIN harus terdiri dari 6 angka!');
+
             return;
         }
+
         if (pinForm.pin !== pinForm.pin_confirmation) {
             alert('Konfirmasi PIN tidak cocok!');
+
             return;
         }
+
         router.post('/profile/pin', pinForm, {
             preserveScroll: true,
             onSuccess: () => {
@@ -76,6 +85,7 @@ export default function BiodataTab() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+
         if (file) {
             const formData = new FormData();
             formData.append('avatar', file);

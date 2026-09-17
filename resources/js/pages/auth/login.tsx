@@ -1,8 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState, type ReactNode } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import Navbar from '@/components/navbar';
+import { useState  } from 'react';
+import type {ReactNode} from 'react';
 import Footer from '@/components/footer';
+import Navbar from '@/components/navbar';
 import { register } from '@/routes';
 import { request } from '@/routes/password';
 
