@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class CartController extends Controller
 {
@@ -15,7 +15,7 @@ class CartController extends Controller
         $userId = Auth::id();
 
         $carts = Cart::with('product')
-            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
             ->latest()
             ->get();
 
@@ -55,7 +55,7 @@ class CartController extends Controller
         $qty = $request->quantity ?? 1;
 
         $cart = Cart::where('product_id', $request->product_id)
-            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
             ->first();
 
         if ($cart) {
@@ -92,7 +92,7 @@ class CartController extends Controller
         $userId = Auth::id();
         $selected = (bool) $request->selected;
 
-        Cart::when($userId, fn($q) => $q->where('user_id', $userId))
+        Cart::when($userId, fn ($q) => $q->where('user_id', $userId))
             ->update(['selected' => $selected]);
 
         return back();
@@ -101,13 +101,14 @@ class CartController extends Controller
     public function destroy($id)
     {
         Cart::findOrFail($id)->delete();
+
         return back();
     }
 
     public function destroySelected()
     {
         $userId = Auth::id();
-        Cart::when($userId, fn($q) => $q->where('user_id', $userId))
+        Cart::when($userId, fn ($q) => $q->where('user_id', $userId))
             ->where('selected', true)
             ->delete();
 

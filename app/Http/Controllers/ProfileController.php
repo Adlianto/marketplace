@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class ProfileController extends Controller
 {
@@ -17,15 +17,21 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|string|lowercase|email|max:255|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
             'birthday' => 'nullable|date',
             'gender' => 'nullable|string|in:Pria,Wanita',
         ]);
 
-        $user->update(array_filter($validated, fn($val) => !is_null($val)));
+        if ($request->has('email') && $user->email !== $validated['email']) {
+            $user->email_verified_at = null;
+        }
 
-        return back()->with('status', 'Profil berhasil diperbarui!');
+        $user->fill(array_filter($validated, fn ($val) => ! is_null($val)));
+        $user->save();
+
+        return redirect()->route('profile.edit')->with('status', 'Profil berhasil diperbarui!');
     }
 
     public function updateAvatar(Request $request)
@@ -37,15 +43,15 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar'); 
+            $file = $request->file('avatar');
             if ($user->avatar && str_starts_with($user->avatar, '/storage/')) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
             }
             $extension = $file->getClientOriginalExtension() ?: 'jpg';
-            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $extension;
+            $filename = 'avatar_'.$user->id.'_'.time().'.'.$extension;
             $path = $file->storeAs('avatars', $filename, 'public');
 
-            $user->update(['avatar' => '/storage/' . $path]);
+            $user->update(['avatar' => '/storage/'.$path]);
         }
 
         return back()->with('status', 'Foto profil berhasil diperbarui!');
