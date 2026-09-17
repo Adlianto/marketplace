@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
+        /** @var User $user */
         $user = Auth::user();
 
         $validated = $request->validate([
@@ -23,72 +24,62 @@ class ProfileController extends Controller
             'gender' => 'nullable|string|in:Pria,Wanita',
         ]);
 
-        $user->update(array_filter($validated, fn($val) => !is_null($val)));
+        $user->update(array_filter($validated, fn ($val) => ! is_null($val)));
 
         return back()->with('status', 'Profil berhasil diperbarui!');
     }
 
-    public function updateAvatar(Request $request)
+    public function updateAvatar(Request $request): RedirectResponse
     {
         $request->validate([
             'avatar' => 'required|file|max:10240',
         ]);
 
+        /** @var User $user */
         $user = Auth::user();
 
         if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar'); 
+            $file = $request->file('avatar');
             if ($user->avatar && str_starts_with($user->avatar, '/storage/')) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
             }
             $extension = $file->getClientOriginalExtension() ?: 'jpg';
-            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $extension;
+            $filename = 'avatar_'.$user->id.'_'.time().'.'.$extension;
             $path = $file->storeAs('avatars', $filename, 'public');
 
-            $user->update(['avatar' => '/storage/' . $path]);
+            $user->update(['avatar' => '/storage/'.$path]);
         }
 
         return back()->with('status', 'Foto profil berhasil diperbarui!');
     }
 
-    public function setPassword(Request $request)
+    public function setPassword(Request $request): RedirectResponse
     {
         $request->validate([
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $request->user()->update([
+        /** @var User $user */
+        $user = $request->user();
+        $user->update([
             'password' => Hash::make($request->password),
         ]);
 
         return back()->with('status', 'Kata sandi berhasil dibuat!');
     }
 
-    public function setPin(Request $request)
+    public function setPin(Request $request): RedirectResponse
     {
         $request->validate([
             'pin' => ['required', 'digits:6', 'confirmed'],
         ]);
 
-        $request->user()->update([
+        /** @var User $user */
+        $user = $request->user();
+        $user->update([
             'pin' => Hash::make($request->pin),
         ]);
 
         return back()->with('status', 'PIN transaksi berhasil disimpan!');
-    }
-
-    public function show($id)
-    {
-        $product = Product::findOrFail($id);
-
-        $relatedProducts = Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
-            ->take(5)
-            ->get();
-
-        return Inertia::render('product/show', [
-            'product' => $product,
-            'relatedProducts' => $relatedProducts,
-        ]);
     }
 }

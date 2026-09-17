@@ -4,11 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\ProductSpecification;
 use App\Models\ProductReview;
+use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use Faker\Factory as Faker;
 
 class DatabaseSeeder extends Seeder
 {
@@ -24,7 +23,7 @@ class DatabaseSeeder extends Seeder
             'SSD & Storage',
             'Power Supply & PSU',
             'PC Case & Cooling',
-            'Monitor & Display'
+            'Monitor & Display',
         ];
 
         $catIds = [];
@@ -38,10 +37,10 @@ class DatabaseSeeder extends Seeder
 
         // Variasi Brand & Seri (Makin Lengkap: Intel, AMD, NVIDIA, Iris)
         $brands = [
-            'ASUS ROG', 'MSI', 'Lenovo Legion', 'Acer Predator', 'Gigabyte AORUS', 
-            'Corsair', 'Intel', 'AMD', 'NVIDIA', 'Radeon', 'Kingston Fury', 
+            'ASUS ROG', 'MSI', 'Lenovo Legion', 'Acer Predator', 'Gigabyte AORUS',
+            'Corsair', 'Intel', 'AMD', 'NVIDIA', 'Radeon', 'Kingston Fury',
             'Samsung Evo', 'NZXT', 'Lian Li', 'Seasonic', 'G.Skill Trident',
-            'ZOTAC', 'Sapphire', 'PowerColor', 'ASRock', 'Galax'
+            'ZOTAC', 'Sapphire', 'PowerColor', 'ASRock', 'Galax',
         ];
 
         $series = [
@@ -54,11 +53,11 @@ class DatabaseSeeder extends Seeder
             // Laptop & Components
             '32GB DDR5 6000MHz', '64GB DDR5 6400MHz', '2TB NVMe Gen4 SSD', '4TB NVMe Gen5 SSD',
             '1000W 80+ Gold PSU', '1200W 80+ Platinum PSU', 'AIO Liquid Cooler 360mm',
-            'Zephyrus G16 OLED', 'Legion Pro 7i', 'Mag Forge ARGB Case', 'O11 Dynamic EVO'
+            'Zephyrus G16 OLED', 'Legion Pro 7i', 'Mag Forge ARGB Case', 'O11 Dynamic EVO',
         ];
 
         $cities = ['Jakarta Pusat', 'Jakarta Barat', 'Jakarta Selatan', 'Bandung', 'Surabaya', 'Tangerang', 'Semarang', 'Yogyakarta', 'Medan', 'Malang', 'Denpasar', 'Makassar'];
-        
+
         // Variasi Image Unsplash (Tema Hardware, Motherboard, GPU, Laptop)
         $images = [
             'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60',
@@ -72,7 +71,7 @@ class DatabaseSeeder extends Seeder
             'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop&q=60',
             'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=500&auto=format&fit=crop&q=60',
             'https://images.unsplash.com/photo-1624705002806-5d72df19c3ad?w=500&auto=format&fit=crop&q=60',
-            'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=60'
+            'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=60',
         ];
 
         // SET TOTAL PRODUK JADI 1000
@@ -87,9 +86,9 @@ class DatabaseSeeder extends Seeder
             for ($j = 0; $j < $batchSize; $j++) {
                 $brand = $brands[array_rand($brands)];
                 $itemSeries = $series[array_rand($series)];
-                $title = "{$brand} {$itemSeries} " . rand(100, 9999) . " Special Edition";
+                $title = "{$brand} {$itemSeries} ".rand(100, 9999).' Special Edition';
                 $catName = $catKeys[array_rand($catKeys)];
-                
+
                 $price = rand(500, 45000) * 1000;
                 $hasDiscount = rand(0, 1) === 1;
                 $discount = $hasDiscount ? rand(5, 50) : null;
@@ -98,13 +97,13 @@ class DatabaseSeeder extends Seeder
                 $batch[] = [
                     'category_id' => $catIds[$catName],
                     'title' => $title,
-                    'slug' => Str::slug($title) . '-' . Str::random(6),
+                    'slug' => Str::slug($title).'-'.Str::random(6),
                     'price' => $price,
                     'original_price' => $originalPrice,
                     'discount' => $discount,
                     'city' => $cities[array_rand($cities)],
                     'rating' => number_format(rand(42, 50) / 10, 1),
-                    'sold_count' => rand(10, 5000) . '+',
+                    'sold_count' => rand(10, 5000).'+',
                     'is_official' => rand(0, 1) === 1,
                     'image' => $images[array_rand($images)],
                     'stock' => rand(5, 500),
@@ -115,18 +114,18 @@ class DatabaseSeeder extends Seeder
             Product::insert($batch);
         }
 
-        $this->command->info("Products generated. Now generating specifications and reviews...");
+        $this->command->info('Products generated. Now generating specifications and reviews...');
 
         // GENERATE SPESIFIKASI & ULASAN DUMMY UNTUK 1000 PRODUK
         $faker = Faker::create('id_ID');
-        
+
         // Memakai chunk agar tidak membebani RAM saat update 1000 produk
         Product::chunk(100, function ($products) use ($faker) {
             foreach ($products as $product) {
                 // 1. Generate Spesifikasi
                 $product->specifications()->createMany([
                     ['name' => 'Kondisi', 'value' => $faker->randomElement(['Baru (Segel Box)', 'Baru (BNOB)', 'Pernah Dipakai'])],
-                    ['name' => 'Berat Satuan', 'value' => $faker->numberBetween(150, 4500) . ' g'],
+                    ['name' => 'Berat Satuan', 'value' => $faker->numberBetween(150, 4500).' g'],
                     ['name' => 'Min. Beli', 'value' => '1 Buah'],
                     ['name' => 'Kategori', 'value' => 'Komponen PC & Laptop'],
                     ['name' => 'Garansi', 'value' => $faker->randomElement(['1 Tahun Resmi', '2 Tahun Distributor', '3 Tahun', 'Garansi Global', 'Tanpa Garansi'])],
@@ -139,7 +138,7 @@ class DatabaseSeeder extends Seeder
                     $reviews[] = [
                         'product_id' => $product->id,
                         'user_name' => $faker->name,
-                        'user_avatar' => 'https://api.dicebear.com/7.x/notionists/svg?seed=' . rand(1, 2000),
+                        'user_avatar' => 'https://api.dicebear.com/7.x/notionists/svg?seed='.rand(1, 2000),
                         'rating' => $faker->numberBetween(4, 5),
                         'comment' => $faker->randomElement([
                             'Barang sampai dengan aman, packing tebal! Suhu adem, mantap.',
@@ -148,7 +147,7 @@ class DatabaseSeeder extends Seeder
                             'Pengiriman cepat pake banget, kemarin pesan pakai Gojek hari ini nyampe.',
                             'Harga termurah se-Tokopedia, kualitas bintang 5.',
                             'Mantap jiwa, rakitan PC jadi makin gahar berkat komponen ini.',
-                            'Awalnya ragu, tapi pas dicoba buat benchmark nilainya tembus rekor!'
+                            'Awalnya ragu, tapi pas dicoba buat benchmark nilainya tembus rekor!',
                         ]),
                         'created_at' => $faker->dateTimeBetween('-1 year', 'now'),
                         'updated_at' => now(),
@@ -158,6 +157,6 @@ class DatabaseSeeder extends Seeder
             }
         });
 
-        $this->command->info("All 1000 products, specs, and reviews seeded successfully!");
+        $this->command->info('All 1000 products, specs, and reviews seeded successfully!');
     }
 }

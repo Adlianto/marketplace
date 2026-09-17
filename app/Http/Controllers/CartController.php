@@ -4,22 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Product;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CartController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $userId = Auth::id();
 
         $carts = Cart::with('product')
-            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
             ->latest()
             ->get();
 
-        $cartItems = $carts->map(function ($cart) {
+        $cartItems = $carts->map(function (Cart $cart) {
             return [
                 'id' => $cart->id,
                 'product_id' => $cart->product->id,
@@ -44,7 +46,7 @@ class CartController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -55,7 +57,7 @@ class CartController extends Controller
         $qty = $request->quantity ?? 1;
 
         $cart = Cart::where('product_id', $request->product_id)
-            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
             ->first();
 
         if ($cart) {
@@ -72,8 +74,9 @@ class CartController extends Controller
         return back();
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
+        /** @var Cart $cart */
         $cart = Cart::findOrFail($id);
 
         if ($request->has('quantity')) {
@@ -87,27 +90,30 @@ class CartController extends Controller
         return back();
     }
 
-    public function toggleAll(Request $request)
+    public function toggleAll(Request $request): RedirectResponse
     {
         $userId = Auth::id();
         $selected = (bool) $request->selected;
 
-        Cart::when($userId, fn($q) => $q->where('user_id', $userId))
+        Cart::when($userId, fn ($q) => $q->where('user_id', $userId))
             ->update(['selected' => $selected]);
 
         return back();
     }
 
-    public function destroy($id)
+    public function destroy(int|string $id): RedirectResponse
     {
-        Cart::findOrFail($id)->delete();
+        /** @var Cart $cart */
+        $cart = Cart::findOrFail($id);
+        $cart->delete();
+
         return back();
     }
 
-    public function destroySelected()
+    public function destroySelected(): RedirectResponse
     {
         $userId = Auth::id();
-        Cart::when($userId, fn($q) => $q->where('user_id', $userId))
+        Cart::when($userId, fn ($q) => $q->where('user_id', $userId))
             ->where('selected', true)
             ->delete();
 
