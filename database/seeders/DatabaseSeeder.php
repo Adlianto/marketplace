@@ -5,14 +5,88 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductReview;
+use App\Models\ProductSku;
+use App\Models\Store;
+use App\Models\StoreWallet;
+use App\Models\User;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $faker = Faker::create('id_ID');
+
+        // 1. BUAT AKUN UTAMA (BELL) & SELLER TESTING
+        $mainUser = User::firstOrCreate(
+            ['email' => 'bell@marketplace.test'],
+            [
+                'name' => 'Bell',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $sellerUser = User::firstOrCreate(
+            ['email' => 'seller@marketplace.test'],
+            [
+                'name' => 'Official Tech Store',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Tambah alamat pengiriman default untuk Bell sesuai skema addresses
+        $mainUser->addresses()->create([
+            'label' => 'Rumah',
+            'receiver' => 'Bell',
+            'phone' => '081234567890',
+            'full_address' => 'Jl. Merdeka No. 45, Kedawung, Cirebon, Jawa Barat 45153',
+            'note' => 'Pagar warna hitam dekat masjid',
+            'pinpoint' => 'Cirebon, West Java, Indonesia',
+            'is_main' => true,
+        ]);
+
+        // 2. BUAT TOKO (MULTI-ORIGIN STORES) DENGAN DOMPET ESCROW
+        $storeTemplates = [
+            ['name' => 'ROG Official Store', 'city' => 'Jakarta Pusat', 'postal_code' => '10110'],
+            ['name' => 'Semarang Computer Hub', 'city' => 'Semarang', 'postal_code' => '50134'],
+            ['name' => 'Bandung Gaming Gear', 'city' => 'Bandung', 'postal_code' => '40115'],
+            ['name' => 'Surabaya Hardware Express', 'city' => 'Surabaya', 'postal_code' => '60271'],
+        ];
+
+        $stores = [];
+        foreach ($storeTemplates as $idx => $tmpl) {
+            $owner = ($idx === 0) ? $sellerUser : User::factory()->create();
+
+            $store = Store::firstOrCreate(
+                ['slug' => Str::slug($tmpl['name'])],
+                [
+                    'user_id' => $owner->id,
+                    'name' => $tmpl['name'],
+                    'city' => $tmpl['city'],
+                    'postal_code' => $tmpl['postal_code'],
+                    'origin_address' => "Komplek Pergudangan Hardware Blok B{$idx}, {$tmpl['city']}",
+                    'description' => "Distributor resmi hardware & peripheral komputer di kota {$tmpl['city']}.",
+                    'status' => 'active',
+                    'is_official' => ($idx === 0),
+                    'power_merchant' => true,
+                ]
+            );
+
+            // Inisialisasi saldo dompet toko
+            StoreWallet::firstOrCreate(
+                ['store_id' => $store->id],
+                ['balance' => 0]
+            );
+
+            $stores[] = $store;
+        }
+
+        // 3. SEED KATEGORI PRODUK
         $categories = [
             'Laptop Gaming',
             'Laptop Ultrabook',
@@ -35,7 +109,7 @@ class DatabaseSeeder extends Seeder
             $catIds[$cat] = $model->id;
         }
 
-        // Variasi Brand & Seri (Makin Lengkap: Intel, AMD, NVIDIA, Iris)
+        // 4. TEMPLATE DATA HARDWARE
         $brands = [
             'ASUS ROG', 'MSI', 'Lenovo Legion', 'Acer Predator', 'Gigabyte AORUS',
             'Corsair', 'Intel', 'AMD', 'NVIDIA', 'Radeon', 'Kingston Fury',
@@ -44,21 +118,14 @@ class DatabaseSeeder extends Seeder
         ];
 
         $series = [
-            // NVIDIA
             'GeForce RTX 4090 24GB', 'GeForce RTX 4080 Super 16GB', 'GeForce RTX 4070 Ti 12GB', 'GeForce RTX 4060 8GB',
-            // AMD / Radeon
             'Radeon RX 7900 XTX 24GB', 'Radeon RX 7800 XT 16GB', 'Radeon RX 7600 8GB', 'Ryzen 9 9950X', 'Ryzen 7 7800X3D', 'Ryzen 5 7600X',
-            // Intel
             'Core i9 14900K', 'Core i7 14700K', 'Core i5 13400F', 'Arc A770 16GB', 'Iris Xe MAX Graphics', 'Intel Iris Plus',
-            // Laptop & Components
             '32GB DDR5 6000MHz', '64GB DDR5 6400MHz', '2TB NVMe Gen4 SSD', '4TB NVMe Gen5 SSD',
             '1000W 80+ Gold PSU', '1200W 80+ Platinum PSU', 'AIO Liquid Cooler 360mm',
             'Zephyrus G16 OLED', 'Legion Pro 7i', 'Mag Forge ARGB Case', 'O11 Dynamic EVO',
         ];
 
-        $cities = ['Jakarta Pusat', 'Jakarta Barat', 'Jakarta Selatan', 'Bandung', 'Surabaya', 'Tangerang', 'Semarang', 'Yogyakarta', 'Medan', 'Malang', 'Denpasar', 'Makassar'];
-
-        // Variasi Image Unsplash (Tema Hardware, Motherboard, GPU, Laptop)
         $images = [
             'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60',
             'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=500&auto=format&fit=crop&q=60',
@@ -74,12 +141,11 @@ class DatabaseSeeder extends Seeder
             'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=60',
         ];
 
-        // SET TOTAL PRODUK JADI 1000
         $totalRecords = 1000;
         $batchSize = 100;
         $catKeys = array_keys($catIds);
 
-        $this->command->info("Generating {$totalRecords} products... This might take a few seconds.");
+        $this->command->info("Generating {$totalRecords} multi-store products...");
 
         for ($i = 0; $i < $totalRecords / $batchSize; $i++) {
             $batch = [];
@@ -89,24 +155,28 @@ class DatabaseSeeder extends Seeder
                 $title = "{$brand} {$itemSeries} ".rand(100, 9999).' Special Edition';
                 $catName = $catKeys[array_rand($catKeys)];
 
+                $assignedStore = $stores[array_rand($stores)];
+
                 $price = rand(500, 45000) * 1000;
                 $hasDiscount = rand(0, 1) === 1;
                 $discount = $hasDiscount ? rand(5, 50) : null;
                 $originalPrice = $hasDiscount ? round($price / (1 - ($discount / 100))) : null;
 
                 $batch[] = [
+                    'store_id' => $assignedStore->id,
                     'category_id' => $catIds[$catName],
                     'title' => $title,
                     'slug' => Str::slug($title).'-'.Str::random(6),
                     'price' => $price,
                     'original_price' => $originalPrice,
                     'discount' => $discount,
-                    'city' => $cities[array_rand($cities)],
+                    'city' => $assignedStore->city,
                     'rating' => number_format(rand(42, 50) / 10, 1),
                     'sold_count' => rand(10, 5000).'+',
-                    'is_official' => rand(0, 1) === 1,
+                    'is_official' => $assignedStore->is_official,
                     'image' => $images[array_rand($images)],
-                    'stock' => rand(5, 500),
+                    'stock' => rand(20, 500),
+                    'has_variants' => false,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -114,25 +184,31 @@ class DatabaseSeeder extends Seeder
             Product::insert($batch);
         }
 
-        $this->command->info('Products generated. Now generating specifications and reviews...');
+        $this->command->info('Products inserted. Now generating SKUs, specs, and reviews...');
 
-        // GENERATE SPESIFIKASI & ULASAN DUMMY UNTUK 1000 PRODUK
-        $faker = Faker::create('id_ID');
-
-        // Memakai chunk agar tidak membebani RAM saat update 1000 produk
+        // 5. GENERATE DEFAULT SKU, SPESIFIKASI & REVIEW
         Product::chunk(100, function ($products) use ($faker) {
             foreach ($products as $product) {
-                // 1. Generate Spesifikasi
-                $product->specifications()->createMany([
-                    ['name' => 'Kondisi', 'value' => $faker->randomElement(['Baru (Segel Box)', 'Baru (BNOB)', 'Pernah Dipakai'])],
-                    ['name' => 'Berat Satuan', 'value' => $faker->numberBetween(150, 4500).' g'],
-                    ['name' => 'Min. Beli', 'value' => '1 Buah'],
-                    ['name' => 'Kategori', 'value' => 'Komponen PC & Laptop'],
-                    ['name' => 'Garansi', 'value' => $faker->randomElement(['1 Tahun Resmi', '2 Tahun Distributor', '3 Tahun', 'Garansi Global', 'Tanpa Garansi'])],
+                ProductSku::create([
+                    'product_id' => $product->id,
+                    'sku_code' => 'SKU-'.$product->id.'-DEF',
+                    'combination_key' => 'Default',
+                    'price' => $product->price,
+                    'original_price' => $product->original_price,
+                    'stock' => $product->stock,
+                    'weight_gram' => rand(200, 2500),
+                    'image' => $product->image,
                 ]);
 
-                // 2. Generate Ulasan (3-8 ulasan per produk)
-                $reviewCount = rand(3, 8);
+                $product->specifications()->createMany([
+                    ['name' => 'Kondisi', 'value' => $faker->randomElement(['Baru (Segel Box)', 'Baru (BNOB)', 'Pernah Dipakai'])],
+                    ['name' => 'Berat Satuan', 'value' => $faker->numberBetween(200, 2500).' g'],
+                    ['name' => 'Min. Beli', 'value' => '1 Buah'],
+                    ['name' => 'Kategori', 'value' => 'Komponen PC & Laptop'],
+                    ['name' => 'Garansi', 'value' => $faker->randomElement(['1 Tahun Resmi', '2 Tahun Distributor', '3 Tahun'])],
+                ]);
+
+                $reviewCount = rand(2, 5);
                 $reviews = [];
                 for ($k = 0; $k < $reviewCount; $k++) {
                     $reviews[] = [
@@ -141,15 +217,12 @@ class DatabaseSeeder extends Seeder
                         'user_avatar' => 'https://api.dicebear.com/7.x/notionists/svg?seed='.rand(1, 2000),
                         'rating' => $faker->numberBetween(4, 5),
                         'comment' => $faker->randomElement([
-                            'Barang sampai dengan aman, packing tebal! Suhu adem, mantap.',
-                            'Performa gila banget buat rendering dan gaming AAA. Sellernya juga ramah.',
+                            'Barang sampai dengan aman, packing kayu tebal! Suhu adem.',
+                            'Performa mantap buat rendering dan gaming berat. Sellernya ramah.',
                             'Sesuai deskripsi, garansi resmi. Recommended seller pokoknya!',
-                            'Pengiriman cepat pake banget, kemarin pesan pakai Gojek hari ini nyampe.',
-                            'Harga termurah se-Tokopedia, kualitas bintang 5.',
-                            'Mantap jiwa, rakitan PC jadi makin gahar berkat komponen ini.',
-                            'Awalnya ragu, tapi pas dicoba buat benchmark nilainya tembus rekor!',
+                            'Pengiriman cepat banget, kemarin pesan hari ini langsung nyampe.',
                         ]),
-                        'created_at' => $faker->dateTimeBetween('-1 year', 'now'),
+                        'created_at' => $faker->dateTimeBetween('-6 months', 'now'),
                         'updated_at' => now(),
                     ];
                 }
@@ -157,6 +230,6 @@ class DatabaseSeeder extends Seeder
             }
         });
 
-        $this->command->info('All 1000 products, specs, and reviews seeded successfully!');
+        $this->command->info('Database seeding completed successfully!');
     }
 }
