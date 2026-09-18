@@ -7,6 +7,9 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Seller\SellerDashboardController;
+use App\Http\Controllers\Seller\SellerSettingController;
+use App\Http\Controllers\StoreController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +60,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route Checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'process'])->middleware('throttle:10,1')->name('checkout.process');
+
+    // Route Buka Toko (Merchant Onboarding)
+    Route::get('/store/create', [StoreController::class, 'create'])->name('store.create');
+    Route::post('/store', [StoreController::class, 'store'])->name('store.store');
+});
+
+// Seller Backoffice Routes (Auth & Has Store)
+Route::middleware(['auth', 'verified', 'has.store'])->prefix('seller')->name('seller.')->group(function () {
+    Route::get('/dashboard', [SellerDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/settings', [SellerSettingController::class, 'edit'])->name('settings.edit');
+    Route::patch('/settings', [SellerSettingController::class, 'update'])->name('settings.update');
 });
 
 if (file_exists(__DIR__.'/settings.php')) {
