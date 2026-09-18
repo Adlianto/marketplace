@@ -1,3 +1,25 @@
+export interface Store {
+    id: number;
+    user_id: number;
+    name: string;
+    slug: string;
+    logo?: string | null;
+    banner?: string | null;
+    description?: string | null;
+    city: string;
+    postal_code: string;
+    origin_address: string;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+    status: 'active' | 'vacation' | 'suspended' | string;
+    is_official: boolean;
+    power_merchant: boolean;
+    created_at?: string;
+    updated_at?: string;
+    user?: User;
+    products?: Product[];
+}
+
 export interface User {
     id: number;
     name: string;
@@ -8,6 +30,7 @@ export interface User {
     birthday?: string | null;
     gender?: 'Pria' | 'Wanita' | string | null;
     two_factor_enabled?: boolean;
+    store?: Store | null;
     created_at?: string;
     updated_at?: string;
     [key: string]: unknown;
@@ -43,6 +66,7 @@ export interface ProductReview {
 
 export interface Product {
     id: number;
+    store_id?: number | null;
     category_id?: number;
     title: string;
     slug?: string;
@@ -51,12 +75,14 @@ export interface Product {
     discount?: number | null;
     image: string;
     stock?: number;
+    has_variants?: boolean;
     city?: string;
     rating?: number | string;
     rating_avg?: number;
     sold_count?: string | number;
     description?: string;
     reviews_count?: number;
+    store?: Store | null;
     category?: Category;
     specifications?: ProductSpecification[];
     reviews?: ProductReview[];

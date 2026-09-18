@@ -11,7 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
- * @property int $category_id
+ * @property int|null $store_id
+ * @property int|null $category_id
  * @property string $title
  * @property string|null $slug
  * @property string|float $price
@@ -19,9 +20,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $discount
  * @property string|null $image
  * @property int|null $stock
+ * @property bool $has_variants
  * @property string|null $city
  * @property float|int|null $rating_avg
  * @property int|null $reviews_count
+ * @property-read Store|null $store
  * @property-read Category|null $category
  * @property-read Collection<int, ProductSpecification> $specifications
  * @property-read Collection<int, ProductReview> $reviews
@@ -33,6 +36,27 @@ class Product extends Model
     use HasFactory;
 
     protected $guarded = ['id'];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'has_variants' => 'boolean',
+            'is_official' => 'boolean',
+        ];
+    }
+
+    /**
+     * @return BelongsTo<Store, $this>
+     */
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     /**
      * @return BelongsTo<Category, $this>
