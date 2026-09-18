@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -35,6 +36,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Address> $addresses
+ * @property-read Store|null $store
  */
 #[Fillable(['name', 'email', 'password', 'pin', 'google_id', 'avatar', 'phone', 'birthday', 'gender'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -63,5 +65,23 @@ class User extends Authenticatable implements PasskeyUser
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    /**
+     * @return HasOne<Store, $this>
+     */
+    public function store(): HasOne
+    {
+        return $this->hasOne(Store::class);
+    }
+
+    /**
+     * Determine if the user has an active store.
+     */
+    public function hasStore(): bool
+    {
+        return $this->relationLoaded('store')
+            ? $this->store !== null
+            : $this->store()->exists();
     }
 }
