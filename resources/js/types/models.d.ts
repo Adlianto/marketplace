@@ -18,6 +18,7 @@ export interface Store {
     updated_at?: string;
     user?: User;
     products?: Product[];
+    wallet?: StoreWallet | null;
 }
 
 export interface User {
@@ -56,12 +57,17 @@ export interface ProductSpecification {
 export interface ProductReview {
     id: number;
     product_id: number;
+    user_id?: number | null;
+    sub_order_item_id?: number | null;
     user_name: string;
-    user_avatar?: string;
+    user_avatar?: string | null;
     rating: number;
+    review?: string;
     comment: string;
+    photos?: string[] | null;
     created_at: string;
     updated_at?: string;
+    is_verified_purchase?: boolean;
 }
 
 export interface VariantOption {
@@ -131,6 +137,7 @@ export interface CartItem {
     id: number;
     user_id?: number | null;
     product_id: number;
+    product_sku_id?: number | null;
     title?: string;
     slug?: string;
     price?: number | string;
@@ -139,11 +146,121 @@ export interface CartItem {
     image?: string;
     stock?: number;
     city?: string;
+    sku_combination?: string | null;
+    weight_gram?: number;
     quantity: number;
     selected?: boolean;
+    store_id?: number | null;
     product?: Product;
+    sku?: ProductSku | null;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface StoreCartGroup {
+    store: {
+        id: number;
+        name: string;
+        slug: string;
+        city: string;
+        is_official: boolean;
+        power_merchant: boolean;
+        logo?: string | null;
+    };
+    items: CartItem[];
+    subtotal: number;
+    total_weight_gram: number;
+    selected_subtotal: number;
+    selected_weight_gram: number;
+    selected_count: number;
+    total_items: number;
+    is_all_selected: boolean;
+}
+
+export interface CourierOption {
+    courier_name: string;
+    courier_service: string;
+    label: string;
+    service_name: string;
+    description: string;
+    base_rate: number;
+    instant?: boolean;
+}
+
+export interface StoreShippingState {
+    courier_name: string;
+    courier_service: string;
+    shipping_cost: number;
+}
+
+export interface SubOrderItem {
+    id: number;
+    sub_order_id: number;
+    product_id: number;
+    product_sku_id?: number | null;
+    product_title: string;
+    sku_combination?: string | null;
+    price: number | string;
+    quantity: number;
+    total_price: number | string;
+    weight_gram: number;
+    created_at?: string;
+    updated_at?: string;
+    product?: Product;
+    productSku?: ProductSku | null;
+    sku?: ProductSku | null;
+    review?: ProductReview | null;
+}
+
+export interface SubOrder {
+    id: number;
+    order_group_id: number;
+    store_id: number;
+    user_id: number;
+    address_id: number;
+    sub_order_number: string;
+    courier_name: string;
+    courier_service: string;
+    tracking_number?: string | null;
+    items_subtotal: number | string;
+    shipping_cost: number | string;
+    total_amount: number | string;
+    status:
+        | 'waiting_payment'
+        | 'paid'
+        | 'processing'
+        | 'shipped'
+        | 'delivered'
+        | 'completed'
+        | 'cancelled'
+        | string;
+    shipped_at?: string | null;
+    delivered_at?: string | null;
+    completed_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    orderGroup?: OrderGroup;
+    store?: Store;
+    user?: User;
+    address?: Address;
+    items?: SubOrderItem[];
+    wallet_transactions?: WalletTransaction[];
+    dispute_ticket?: DisputeTicket | null;
+    dispute?: DisputeTicket | null;
+}
+
+export interface OrderGroup {
+    id: number;
+    group_code: string;
+    user_id: number;
+    total_amount: number | string;
+    payment_status: 'pending' | 'paid' | 'expired' | 'failed' | string;
+    snap_token?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    user?: User;
+    subOrders?: SubOrder[];
+    sub_orders?: SubOrder[];
 }
 
 export interface Address {
@@ -218,3 +335,45 @@ export interface PaginatedData<T> {
     total: number;
     per_page?: number;
 }
+
+export interface StoreWallet {
+    id: number;
+    store_id: number;
+    balance: number | string;
+    created_at?: string;
+    updated_at?: string;
+    store?: Store;
+    transactions?: WalletTransaction[];
+}
+
+export interface WalletTransaction {
+    id: number;
+    store_wallet_id: number;
+    sub_order_id?: number | null;
+    type: 'credit' | 'debit';
+    amount: number | string;
+    description: string;
+    created_at?: string;
+    updated_at?: string;
+    wallet?: StoreWallet;
+    sub_order?: SubOrder | null;
+}
+
+export interface DisputeTicket {
+    id: number;
+    sub_order_id: number;
+    user_id: number;
+    store_id: number;
+    reason: string;
+    description: string;
+    evidence_photos: string[];
+    status: 'open' | 'negotiation' | 'resolved_refund' | 'resolved_completed' | 'cancelled' | string;
+    solution?: string | null;
+    created_at: string;
+    updated_at?: string;
+    sub_order?: SubOrder;
+    subOrder?: SubOrder;
+    user?: User;
+    store?: Store;
+}
+

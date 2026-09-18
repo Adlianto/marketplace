@@ -4,10 +4,14 @@ use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Seller\SellerDashboardController;
+use App\Http\Controllers\Seller\SellerOrderController;
 use App\Http\Controllers\Seller\SellerProductController;
 use App\Http\Controllers\Seller\SellerSettingController;
 use App\Http\Controllers\StoreController;
@@ -28,6 +32,7 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
 Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/toggle-all', [CartController::class, 'toggleAll'])->name('cart.toggleAll');
+Route::post('/cart/toggle-store', [CartController::class, 'toggleStore'])->name('cart.toggleStore');
 Route::delete('/cart/selected/delete', [CartController::class, 'destroySelected'])->name('cart.destroySelected');
 Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
 
@@ -43,6 +48,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return Inertia::render('dashboard', [
             'addresses' => $user->addresses()->latest()->get(),
+            'orders' => $user->subOrders()
+                ->with(['items.product', 'items.sku', 'items.review', 'disputeTicket', 'store', 'address'])
+                ->latest()
+                ->get(),
         ]);
     })->name('dashboard');
 
@@ -63,10 +72,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route Checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'process'])->middleware('throttle:10,1')->name('checkout.process');
+    Route::post('/checkout/multi', [CheckoutController::class, 'processMulti'])->middleware('throttle:10,1')->name('checkout.processMulti');
 
     // Route Buka Toko (Merchant Onboarding)
     Route::get('/store/create', [StoreController::class, 'create'])->name('store.create');
     Route::post('/store', [StoreController::class, 'store'])->name('store.store');
+
+    // Route Pesanan Pembeli (Buyer Orders)
+    Route::post('/orders/{subOrder}/complete', [OrderController::class, 'complete'])->name('orders.complete');
+
+    // Route Ulasan Produk Terverifikasi (Verified Purchase Review)
+    Route::post('/reviews', [ProductReviewController::class, 'store'])->name('reviews.store');
+
+    // Route Dispute Resolution Center (Komplain Pesanan)
+    Route::get('/orders/{subOrder}/dispute', [DisputeController::class, 'create'])->name('disputes.create');
+    Route::post('/disputes', [DisputeController::class, 'store'])->name('disputes.store');
+    Route::get('/disputes/{disputeTicket}', [DisputeController::class, 'show'])->name('disputes.show');
+    Route::post('/disputes/{disputeTicket}/resolve', [DisputeController::class, 'resolve'])->name('disputes.resolve');
 });
 
 // Seller Backoffice Routes (Auth & Has Store)
@@ -75,6 +97,11 @@ Route::middleware(['auth', 'verified', 'has.store'])->prefix('seller')->name('se
     Route::get('/settings', [SellerSettingController::class, 'edit'])->name('settings.edit');
     Route::patch('/settings', [SellerSettingController::class, 'update'])->name('settings.update');
     Route::post('/products', [SellerProductController::class, 'store'])->name('products.store');
+
+    // Orders Management
+    Route::get('/orders', [SellerOrderController::class, 'index'])->name('orders.index');
+    Route::post('/orders/{subOrder}/accept', [SellerOrderController::class, 'accept'])->name('orders.accept');
+    Route::post('/orders/{subOrder}/ship', [SellerOrderController::class, 'ship'])->name('orders.ship');
 });
 
 if (file_exists(__DIR__.'/settings.php')) {

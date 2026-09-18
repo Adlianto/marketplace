@@ -97,11 +97,18 @@ export default function SellerDashboard({
                             <span>Lihat Toko Publik</span>
                         </Link>
                         <Link
-                            href="/seller/settings"
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-emerald-700 md:flex-initial"
+                            href="/seller/orders"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700 md:flex-initial"
                         >
-                            <Settings className="h-3.5 w-3.5" />
-                            <span>Pengaturan Toko & Gudang</span>
+                            <Truck className="h-3.5 w-3.5" />
+                            <span>Kelola Pesanan</span>
+                        </Link>
+                        <Link
+                            href="/seller/settings"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 md:flex-initial"
+                        >
+                            <Settings className="h-3.5 w-3.5 text-slate-500" />
+                            <span>Pengaturan Toko</span>
                         </Link>
                     </div>
                 </div>
@@ -127,7 +134,10 @@ export default function SellerDashboard({
                     </div>
 
                     {/* Incoming Orders */}
-                    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <Link
+                        href="/seller/orders"
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-purple-300 hover:shadow-md"
+                    >
                         <div>
                             <p className="text-xs font-medium text-slate-500">
                                 Pesanan Masuk
@@ -135,17 +145,20 @@ export default function SellerDashboard({
                             <h3 className="mt-1 text-2xl font-bold text-slate-900">
                                 {metrics.incoming_orders_count}
                             </h3>
-                            <span className="mt-1 inline-block text-[11px] text-slate-400">
-                                Total pesanan toko
+                            <span className="mt-1 inline-block text-[11px] text-purple-600 font-medium">
+                                Lihat semua pesanan &rarr;
                             </span>
                         </div>
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
                             <ShoppingBag className="h-6 w-6" />
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Orders to Ship */}
-                    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <Link
+                        href="/seller/orders?status=processing"
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md"
+                    >
                         <div>
                             <p className="text-xs font-medium text-slate-500">
                                 Perlu Dikirim
@@ -153,14 +166,14 @@ export default function SellerDashboard({
                             <h3 className="mt-1 text-2xl font-bold text-slate-900">
                                 {metrics.orders_to_ship_count}
                             </h3>
-                            <span className="mt-1 inline-block text-[11px] text-amber-600">
-                                Menunggu nomor resi
+                            <span className="mt-1 inline-block text-[11px] text-amber-600 font-medium">
+                                Masukkan resi &rarr;
                             </span>
                         </div>
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                             <Truck className="h-6 w-6" />
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Wallet Balance */}
                     <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

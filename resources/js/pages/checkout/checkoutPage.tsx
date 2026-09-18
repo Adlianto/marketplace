@@ -1,6 +1,17 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import React from 'react';
-import type { Address, CartItem } from '@/types';
+import { Head, router } from '@inertiajs/react';
+import React, { useState, useMemo } from 'react';
+import {
+    MapPin,
+    ArrowLeft,
+    CheckCircle2,
+    PlusCircle,
+    FileText,
+} from 'lucide-react';
+import type { Address, CartItem, StoreCartGroup, StoreShippingState } from '@/types';
+import StoreOrderSection from '@/components/checkout/StoreOrderSection';
+import PaymentSummaryCard from '@/components/checkout/PaymentSummaryCard';
+import { calculateShippingCost } from '@/components/checkout/CourierSelector';
+import useMidtransSnap from '@/hooks/useMidtransSnap';
 
 interface CheckoutProps {
     items: CartItem[];
@@ -10,123 +21,321 @@ interface CheckoutProps {
         shipping_cost: number;
         grand_total: number;
     };
+    storeGroups?: StoreCartGroup[];
 }
 
 export default function CheckoutPage({
     items,
     addresses,
     summary,
+    storeGroups: serverStoreGroups,
 }: CheckoutProps) {
-    const defaultAddress =
-        addresses.find((addr) => addr.is_main) || addresses[0];
+    // 1. Resolve store groups (use server-provided storeGroups or fallback to client grouping)
+    const activeGroups: StoreCartGroup[] = useMemo(() => {
+        if (serverStoreGroups && serverStoreGroups.length > 0) {
+            return serverStoreGroups;
+        }
 
-    const { data, setData, post, processing, errors } = useForm<{
-        address_id: number | '';
-        payment_method: string;
-        notes: string;
-    }>({
-        address_id: defaultAddress ? defaultAddress.id : '',
-        payment_method: 'qris',
-        notes: '',
+        // Fallback client grouping for robustness
+        const groupMap = new Map<number, CartItem[]>();
+        for (const item of items) {
+            const storeId = item.product?.store_id ?? item.store_id ?? 0;
+            const existing = groupMap.get(storeId) || [];
+            existing.push(item);
+            groupMap.set(storeId, existing);
+        }
+
+        const derived: StoreCartGroup[] = [];
+        groupMap.forEach((storeItems, storeId) => {
+            const first = storeItems[0];
+            const storeObj = first.product?.store;
+
+            let subtotal = 0;
+            let totalWeight = 0;
+
+            for (const it of storeItems) {
+                const price = Number(it.sku?.price ?? it.price ?? it.product?.price ?? 0);
+                const weight = Number(it.weight_gram ?? it.sku?.weight_gram ?? 200);
+                subtotal += price * it.quantity;
+                totalWeight += weight * it.quantity;
+            }
+
+            derived.push({
+                store: {
+                    id: storeObj?.id ?? storeId,
+                    name: storeObj?.name ?? 'Toko Marketplace',
+                    slug: storeObj?.slug ?? 'toko-marketplace',
+                    city: storeObj?.city || first.product?.city || 'Jakarta Pusat',
+                    is_official: Boolean(storeObj?.is_official),
+                    power_merchant: Boolean(storeObj?.power_merchant),
+                    logo: storeObj?.logo ?? null,
+                },
+                items: storeItems,
+                subtotal,
+                total_weight_gram: totalWeight,
+                selected_subtotal: subtotal,
+                selected_weight_gram: totalWeight,
+                selected_count: storeItems.length,
+                total_items: storeItems.length,
+                is_all_selected: true,
+            });
+        });
+
+        return derived;
+    }, [serverStoreGroups, items]);
+
+    // 2. Default Address Selection
+    const defaultAddress =
+        addresses.find((addr) => addr.is_main) || addresses[0] || null;
+    const [selectedAddressId, setSelectedAddressId] = useState<number | ''>(
+        defaultAddress ? defaultAddress.id : ''
+    );
+
+    // 3. Courier selection per store (Independent shipping state)
+    // Default each store to JNE REG (base_rate = 8000)
+    const [storeShipping, setStoreShipping] = useState<Record<number, StoreShippingState>>(() => {
+        const initial: Record<number, StoreShippingState> = {};
+        for (const group of activeGroups) {
+            const { cost } = calculateShippingCost(group.selected_weight_gram, 8000);
+            initial[group.store.id] = {
+                courier_name: 'jne',
+                courier_service: 'REG',
+                shipping_cost: cost,
+            };
+        }
+        return initial;
     });
 
-    const formatRupiah = (val: number) => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            maximumFractionDigits: 0,
-        }).format(val);
+    // Handle courier update for a specific store without affecting others
+    const handleStoreCourierChange = (
+        storeId: number,
+        courierName: string,
+        serviceKey: string,
+        cost: number
+    ) => {
+        setStoreShipping((prev) => ({
+            ...prev,
+            [storeId]: {
+                courier_name: courierName,
+                courier_service: serviceKey,
+                shipping_cost: cost,
+            },
+        }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post('/checkout', {
-            preserveScroll: true,
-        });
+    // 4. Financial Calculations
+    const itemsSubtotal = useMemo(() => {
+        return activeGroups.reduce((acc, g) => acc + g.selected_subtotal, 0);
+    }, [activeGroups]);
+
+    const totalShippingCost = useMemo(() => {
+        let total = 0;
+        for (const group of activeGroups) {
+            const shipping = storeShipping[group.store.id];
+            if (shipping) {
+                total += shipping.shipping_cost;
+            } else {
+                const { cost } = calculateShippingCost(group.selected_weight_gram, 8000);
+                total += cost;
+            }
+        }
+        return total;
+    }, [activeGroups, storeShipping]);
+
+    const applicationFee = 1000;
+    const grandTotal = itemsSubtotal + totalShippingCost + applicationFee;
+
+    const totalItemCount = useMemo(() => {
+        return activeGroups.reduce(
+            (acc, g) => acc + g.items.reduce((sum, it) => sum + it.quantity, 0),
+            0
+        );
+    }, [activeGroups]);
+
+    // 5. Payment & Notes state
+    const [paymentMethod, setPaymentMethod] = useState<string>('qris');
+    const [notes, setNotes] = useState<string>('');
+    const [processing, setProcessing] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Midtrans Snap Modal Hook
+    const { pay, isPaying, snapError, setSnapError } = useMidtransSnap({
+        onSuccessRedirectUrl: '/dashboard',
+        onPendingRedirectUrl: '/dashboard',
+    });
+
+    // 6. Submit Multi-Store Checkout with Snap Payment Integration
+    const handleSubmit = async () => {
+        if (!selectedAddressId) {
+            setErrorMessage('Silakan pilih alamat pengiriman.');
+            return;
+        }
+
+        setProcessing(true);
+        setErrorMessage(null);
+        setSnapError(null);
+
+        const payload = {
+            address_id: Number(selectedAddressId),
+            stores: activeGroups.map((group) => {
+                const shipping = storeShipping[group.store.id] || {
+                    courier_name: 'jne',
+                    courier_service: 'REG',
+                    shipping_cost: 8000,
+                };
+                return {
+                    store_id: group.store.id,
+                    courier_name: shipping.courier_name,
+                    courier_service: shipping.courier_service,
+                };
+            }),
+            payment_method: paymentMethod,
+            notes: notes.trim() || undefined,
+        };
+
+        const csrfToken =
+            (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+
+        try {
+            const response = await fetch('/checkout/multi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = (await response.json()) as {
+                    message?: string;
+                    errors?: Record<string, string[]>;
+                };
+                const firstErr = errorData.errors
+                    ? Object.values(errorData.errors)[0]?.[0]
+                    : errorData.message;
+                throw new Error(firstErr || 'Gagal memproses pesanan.');
+            }
+
+            const data = (await response.json()) as {
+                success: boolean;
+                snap_token?: string | null;
+                order_group?: { group_code: string };
+            };
+
+            if (data.snap_token) {
+                // Tampilkan Snap Modal Popup
+                pay(data.snap_token, {
+                    onClose: () => {
+                        setProcessing(false);
+                    },
+                    onError: (err) => {
+                        setProcessing(false);
+                        setErrorMessage(err.status_message || 'Pembayaran gagal.');
+                    },
+                });
+            } else {
+                // Fallback redirect jika tidak ada snap token
+                router.visit('/dashboard');
+            }
+        } catch (err: unknown) {
+            setProcessing(false);
+            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+            setErrorMessage(msg);
+        }
     };
 
     return (
-        <div className="min-h-screen bg-[#FDFBF7] p-6 font-sans text-[#1A1A1A] lg:p-12">
-            <Head title="Checkout Pesanan" />
+        <div className="min-h-screen bg-[#FDFBF7] p-4 font-sans text-[#1A1A1A] lg:p-10">
+            <Head title="Checkout Pesanan Multi-Toko" />
 
             <div className="mx-auto max-w-6xl">
-                <header className="mb-8 flex items-end justify-between border-b-2 border-black pb-4">
+                {/* Header Tokopedia style */}
+                <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b-2 border-black pb-4">
                     <div>
-                        <span className="font-mono text-xs tracking-widest text-neutral-500 uppercase">
-                            Marketplace Engine
+                        <span className="font-mono text-xs font-bold tracking-widest text-neutral-500 uppercase">
+                            Marketplace Engine • Multi-Vendor Logistics
                         </span>
-                        <h1 className="text-3xl font-black tracking-tight uppercase">
+                        <h1 className="text-2xl font-black tracking-tight uppercase sm:text-3xl">
                             Ringkasan Checkout
                         </h1>
                     </div>
                     <button
                         type="button"
                         onClick={() => router.visit('/cart')}
-                        className="cursor-pointer text-sm font-bold underline transition hover:text-neutral-600"
+                        className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-bold underline transition hover:text-neutral-600"
                     >
-                        &larr; Kembali ke Keranjang
+                        <ArrowLeft size={16} />
+                        <span>Kembali ke Keranjang</span>
                     </button>
                 </header>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="grid grid-cols-1 gap-8 lg:grid-cols-12"
-                >
-                    {/* Kolom Kiri: Alamat, Items, Catatan */}
+                <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+                    {/* ==================================================== */}
+                    {/* KOLOM KIRI: Alamat, Pengiriman Toko, Catatan */}
+                    {/* ==================================================== */}
                     <div className="space-y-6 lg:col-span-8">
-                        {/* Section Alamat */}
+                        {/* 1. Alamat Pengiriman */}
                         <div className="border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-lg font-black tracking-wide uppercase">
-                                    1. Alamat Pengiriman
-                                </h2>
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <MapPin size={18} className="text-[#03ac0e]" />
+                                    <h2 className="text-base font-black tracking-wide text-slate-900 uppercase">
+                                        1. Alamat Pengiriman
+                                    </h2>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => router.visit('/dashboard')}
-                                    className="cursor-pointer bg-black px-3 py-1 text-xs font-bold tracking-wider text-white uppercase transition hover:bg-neutral-800"
+                                    className="cursor-pointer bg-black px-3 py-1.5 text-xs font-bold tracking-wider text-white uppercase transition hover:bg-neutral-800"
                                 >
                                     Kelola Alamat
                                 </button>
                             </div>
 
                             {addresses.length === 0 ? (
-                                <div className="border-2 border-dashed border-red-500 bg-red-50 p-4 text-sm font-medium text-red-700">
-                                    Kamu belum memiliki alamat tersimpan.
-                                    Silakan tambahkan alamat terlebih dahulu
-                                    sebelum checkout.
+                                <div className="border-2 border-dashed border-red-500 bg-red-50 p-4 text-center">
+                                    <p className="text-sm font-bold text-red-700">
+                                        Kamu belum memiliki alamat pengiriman tersimpan.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.visit('/dashboard')}
+                                        className="mt-3 inline-flex items-center gap-1.5 border-2 border-black bg-white px-3 py-1.5 text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-50"
+                                    >
+                                        <PlusCircle size={14} />
+                                        <span>Tambah Alamat Sekarang</span>
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
                                     {addresses.map((addr) => {
-                                        const isSelected =
-                                            data.address_id === addr.id;
+                                        const isSelected = selectedAddressId === addr.id;
 
                                         return (
                                             <label
                                                 key={addr.id}
-                                                className={`block cursor-pointer border-2 p-4 transition ${
+                                                className={`block cursor-pointer border-2 p-4 transition-all ${
                                                     isSelected
-                                                        ? 'border-[#03ac0e] bg-emerald-50/40'
-                                                        : 'border-neutral-200 hover:border-black'
+                                                        ? 'border-[#03ac0e] bg-emerald-50/40 shadow-[0_0_0_1px_rgba(3,172,14,0.3)]'
+                                                        : 'border-neutral-200 hover:border-black hover:bg-neutral-50/50'
                                                 }`}
                                             >
                                                 <div className="flex items-start gap-3">
                                                     <input
                                                         type="radio"
-                                                        name="address_id"
+                                                        name="selected_address_id"
                                                         value={addr.id}
                                                         checked={isSelected}
                                                         onChange={() =>
-                                                            setData(
-                                                                'address_id',
-                                                                addr.id,
-                                                            )
+                                                            setSelectedAddressId(addr.id)
                                                         }
                                                         className="mt-1 accent-[#03ac0e]"
                                                     />
                                                     <div className="flex-1 text-sm">
-                                                        <div className="mb-1 flex items-center gap-2">
-                                                            <span className="bg-black px-2 py-0.5 text-xs font-black tracking-wider text-white uppercase">
+                                                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                                                            <span className="bg-black px-2 py-0.5 text-[11px] font-black tracking-wider text-white uppercase">
                                                                 {addr.label}
                                                             </span>
                                                             {addr.is_main && (
@@ -134,228 +343,118 @@ export default function CheckoutPage({
                                                                     Utama
                                                                 </span>
                                                             )}
-                                                            <span className="font-bold text-slate-800">
+                                                            <span className="font-bold text-slate-900">
                                                                 {addr.receiver}
                                                             </span>
                                                             <span className="font-mono text-xs text-neutral-500">
                                                                 ({addr.phone})
                                                             </span>
                                                         </div>
-                                                        <p className="mt-1 text-neutral-700">
+                                                        <p className="mt-1 text-neutral-700 leading-relaxed">
                                                             {addr.full_address}
                                                         </p>
                                                         {addr.note && (
                                                             <p className="mt-1 text-xs text-neutral-500 italic">
-                                                                Catatan:{' '}
-                                                                {addr.note}
+                                                                Catatan: {addr.note}
                                                             </p>
                                                         )}
                                                     </div>
+                                                    {isSelected && (
+                                                        <div className="shrink-0 text-[#03ac0e]">
+                                                            <CheckCircle2 size={18} />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </label>
                                         );
                                     })}
                                 </div>
                             )}
-                            {errors.address_id && (
-                                <p className="mt-2 text-xs font-bold text-red-600">
-                                    {errors.address_id}
-                                </p>
-                            )}
                         </div>
 
-                        {/* Section Barang yang Dibeli */}
-                        <div className="border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <h2 className="mb-4 text-lg font-black tracking-wide uppercase">
-                                2. Rincian Barang
-                            </h2>
-                            <div className="divide-y-2 divide-neutral-100">
-                                {items.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center gap-4 py-4"
-                                    >
-                                        <div className="h-16 w-16 shrink-0 overflow-hidden border border-black bg-neutral-100">
-                                            {item.product?.image ? (
-                                                <img
-                                                    src={item.product.image}
-                                                    alt={
-                                                        item.product?.title ||
-                                                        'Produk'
-                                                    }
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="flex h-full w-full items-center justify-center font-mono text-xs text-neutral-400">
-                                                    No IMG
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="truncate text-sm font-bold text-slate-900">
-                                                {item.product?.title ||
-                                                    'Produk'}
-                                            </h3>
-                                            <p className="mt-0.5 font-mono text-xs text-neutral-500">
-                                                {item.quantity} barang x{' '}
-                                                {formatRupiah(
-                                                    Number(
-                                                        item.product?.price ||
-                                                            0,
-                                                    ),
-                                                )}
-                                            </p>
-                                        </div>
-                                        <div className="shrink-0 text-right">
-                                            <p className="text-sm font-black">
-                                                {formatRupiah(
-                                                    Number(
-                                                        item.product?.price ||
-                                                            0,
-                                                    ) * item.quantity,
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* 2. Seksi Pesanan per Toko */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-base font-black tracking-wide text-slate-900 uppercase">
+                                    2. Daftar Pengiriman per Toko ({activeGroups.length} Toko)
+                                </h2>
+                                <span className="text-xs text-neutral-500">
+                                    Pilih kurir untuk masing-masing toko
+                                </span>
                             </div>
+
+                            {activeGroups.map((group) => {
+                                const storeId = group.store.id;
+                                const shipping = storeShipping[storeId] || {
+                                    courier_name: 'jne',
+                                    courier_service: 'REG',
+                                    shipping_cost: 8000,
+                                };
+
+                                return (
+                                    <StoreOrderSection
+                                        key={storeId}
+                                        group={group}
+                                        selectedCourier={shipping.courier_name}
+                                        selectedService={shipping.courier_service}
+                                        shippingCost={shipping.shipping_cost}
+                                        onCourierChange={(courierName, serviceKey, cost) =>
+                                            handleStoreCourierChange(
+                                                storeId,
+                                                courierName,
+                                                serviceKey,
+                                                cost
+                                            )
+                                        }
+                                    />
+                                );
+                            })}
                         </div>
 
-                        {/* Section Catatan Tambahan */}
+                        {/* 3. Catatan Pengiriman (Opsional) */}
                         <div className="border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <h2 className="mb-2 text-lg font-black tracking-wide uppercase">
-                                3. Catatan Pengiriman (Opsional)
-                            </h2>
+                            <div className="mb-2 flex items-center gap-2">
+                                <FileText size={16} className="text-slate-700" />
+                                <h2 className="text-base font-black tracking-wide text-slate-900 uppercase">
+                                    3. Catatan Pengiriman (Opsional)
+                                </h2>
+                            </div>
                             <textarea
-                                value={data.notes}
-                                onChange={(e) =>
-                                    setData('notes', e.target.value)
-                                }
-                                placeholder="Contoh: Titipkan di pos satpam atau jangan dibanting."
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Contoh: Titipkan pada satpam atau paket jangan dibanting."
                                 rows={3}
+                                maxLength={500}
                                 className="w-full border-2 border-black p-3 text-sm focus:ring-2 focus:ring-[#03ac0e] focus:outline-none"
                             />
-                            {errors.notes && (
-                                <p className="mt-1 text-xs font-bold text-red-600">
-                                    {errors.notes}
-                                </p>
-                            )}
+                            <div className="mt-1 flex justify-between text-[11px] text-neutral-400">
+                                <span>Maksimal 500 karakter</span>
+                                <span>{notes.length}/500</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Kolom Kanan: Pembayaran & Ringkasan */}
-                    <div className="space-y-6 lg:col-span-4">
-                        {/* Section Metode Pembayaran */}
-                        <div className="border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <h2 className="mb-4 text-lg font-black tracking-wide uppercase">
-                                Metode Pembayaran
-                            </h2>
-                            <div className="space-y-2">
-                                {[
-                                    {
-                                        id: 'qris',
-                                        label: 'QRIS (Gopay, OVO, Dana)',
-                                        desc: 'Scan instan dengan aplikasi e-wallet apapun',
-                                    },
-                                    {
-                                        id: 'bca_va',
-                                        label: 'BCA Virtual Account',
-                                        desc: 'Verifikasi otomatis 24 jam',
-                                    },
-                                    {
-                                        id: 'mandiri_va',
-                                        label: 'Mandiri Virtual Account',
-                                        desc: 'Verifikasi otomatis 24 jam',
-                                    },
-                                ].map((method) => (
-                                    <label
-                                        key={method.id}
-                                        className={`block cursor-pointer border-2 p-3 transition ${
-                                            data.payment_method === method.id
-                                                ? 'border-[#03ac0e] bg-emerald-50/40'
-                                                : 'border-neutral-200 hover:border-black'
-                                        }`}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <input
-                                                type="radio"
-                                                name="payment_method"
-                                                value={method.id}
-                                                checked={
-                                                    data.payment_method ===
-                                                    method.id
-                                                }
-                                                onChange={() =>
-                                                    setData(
-                                                        'payment_method',
-                                                        method.id,
-                                                    )
-                                                }
-                                                className="mt-1 accent-[#03ac0e]"
-                                            />
-                                            <div>
-                                                <p className="text-xs font-bold tracking-wider uppercase">
-                                                    {method.label}
-                                                </p>
-                                                <p className="mt-0.5 text-[11px] text-neutral-500">
-                                                    {method.desc}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
-                            {errors.payment_method && (
-                                <p className="mt-2 text-xs font-bold text-red-600">
-                                    {errors.payment_method}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Section Ringkasan Biaya */}
-                        <div className="border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <h2 className="mb-4 text-lg font-black tracking-wide uppercase">
-                                Ringkasan Belanja
-                            </h2>
-                            <div className="space-y-2 border-b-2 border-dashed border-neutral-300 pb-4 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-neutral-600">
-                                        Total Harga ({items.length} Barang)
-                                    </span>
-                                    <span className="font-mono font-bold">
-                                        {formatRupiah(summary.subtotal)}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-neutral-600">
-                                        Total Ongkos Kirim
-                                    </span>
-                                    <span className="font-mono font-bold">
-                                        {formatRupiah(summary.shipping_cost)}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="mb-6 flex items-center justify-between pt-4">
-                                <span className="text-base font-black tracking-wide uppercase">
-                                    Total Tagihan
-                                </span>
-                                <span className="font-mono text-xl font-black text-[#03ac0e]">
-                                    {formatRupiah(summary.grand_total)}
-                                </span>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={processing || addresses.length === 0}
-                                className="w-full cursor-pointer border-2 border-black bg-[#03ac0e] p-4 text-sm font-black tracking-widest text-white uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {processing
-                                    ? 'Memproses Pesanan...'
-                                    : 'Bayar Sekarang'}
-                            </button>
-                        </div>
+                    {/* ==================================================== */}
+                    {/* KOLOM KANAN: PaymentSummaryCard Sticky */}
+                    {/* ==================================================== */}
+                    <div className="lg:sticky lg:top-6 lg:col-span-4">
+                        <PaymentSummaryCard
+                            itemsSubtotal={itemsSubtotal}
+                            totalShippingCost={totalShippingCost}
+                            storeCount={activeGroups.length}
+                            itemCount={totalItemCount}
+                            applicationFee={applicationFee}
+                            grandTotal={grandTotal}
+                            paymentMethod={paymentMethod}
+                            onPaymentMethodChange={setPaymentMethod}
+                            onSubmit={handleSubmit}
+                            processing={processing || isPaying}
+                            disabled={processing || isPaying}
+                            hasAddress={Boolean(selectedAddressId)}
+                            errorMessage={errorMessage || snapError}
+                        />
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );
