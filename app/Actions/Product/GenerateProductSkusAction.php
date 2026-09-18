@@ -19,8 +19,8 @@ class GenerateProductSkusAction
      */
     public function generateCombinations(array $variantOptionsArrays): array
     {
-        // Filter out empty arrays or non-array elements
-        $filtered = array_filter($variantOptionsArrays, fn ($options) => is_array($options) && count($options) > 0);
+        // Filter out empty arrays
+        $filtered = array_filter($variantOptionsArrays, fn ($options): bool => count($options) > 0);
 
         if (empty($filtered)) {
             return [];
@@ -38,10 +38,10 @@ class GenerateProductSkusAction
             $result = $tmp;
         }
 
-        return array_values(array_map(
+        return array_map(
             fn (array $item): string => implode('-', $item),
             $result
-        ));
+        );
     }
 
     /**

@@ -18,6 +18,7 @@ class ProductFactory extends Factory
      */
     public function definition(): array
     {
+        /** @var string $title */
         $title = fake()->words(3, true);
 
         return [
