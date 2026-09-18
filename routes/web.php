@@ -7,6 +7,8 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Seller\SellerDashboardController;
+use App\Http\Controllers\Seller\SellerSettingController;
 use App\Http\Controllers\StoreController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -62,9 +64,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route Buka Toko (Merchant Onboarding)
     Route::get('/store/create', [StoreController::class, 'create'])->name('store.create');
     Route::post('/store', [StoreController::class, 'store'])->name('store.store');
-    Route::get('/seller/dashboard', function (): Response {
-        return Inertia::render('dashboard');
-    })->name('seller.dashboard');
+});
+
+// Seller Backoffice Routes (Auth & Has Store)
+Route::middleware(['auth', 'verified', 'has.store'])->prefix('seller')->name('seller.')->group(function () {
+    Route::get('/dashboard', [SellerDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/settings', [SellerSettingController::class, 'edit'])->name('settings.edit');
+    Route::patch('/settings', [SellerSettingController::class, 'update'])->name('settings.update');
 });
 
 if (file_exists(__DIR__.'/settings.php')) {
