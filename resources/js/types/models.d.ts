@@ -193,7 +193,14 @@ export interface Order {
     total_price: number | string;
     shipping_cost: number | string;
     grand_total: number | string;
-    status: 'pending' | 'paid' | 'processing' | 'shipped' | 'completed' | 'cancelled' | string;
+    status:
+        | 'pending'
+        | 'paid'
+        | 'processing'
+        | 'shipped'
+        | 'completed'
+        | 'cancelled'
+        | string;
     notes?: string | null;
     created_at: string;
     updated_at?: string;

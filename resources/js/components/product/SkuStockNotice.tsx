@@ -15,7 +15,9 @@ export default function SkuStockNotice({
         return (
             <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
                 <AlertCircle size={15} className="shrink-0 text-amber-500" />
-                <span>Pilih seluruh varian untuk melihat ketersediaan stok.</span>
+                <span>
+                    Pilih seluruh varian untuk melihat ketersediaan stok.
+                </span>
             </div>
         );
     }

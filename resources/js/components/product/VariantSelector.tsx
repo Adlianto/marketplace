@@ -22,7 +22,10 @@ export default function VariantSelector({
      * Check if a specific candidate option has available stock
      * given the other currently selected options.
      */
-    const isOptionAvailable = (variantName: string, optionValue: string): boolean => {
+    const isOptionAvailable = (
+        variantName: string,
+        optionValue: string,
+    ): boolean => {
         // Construct hypothetical selection with this candidate option
         const hypothetical: Record<string, string> = {
             ...selectedOptions,
@@ -41,8 +44,12 @@ export default function VariantSelector({
                 }
 
                 // Match against either order or split position
-                return parts[index]?.toLowerCase() === selectedVal.toLowerCase() ||
-                    parts.some((p) => p.toLowerCase() === selectedVal.toLowerCase());
+                return (
+                    parts[index]?.toLowerCase() === selectedVal.toLowerCase() ||
+                    parts.some(
+                        (p) => p.toLowerCase() === selectedVal.toLowerCase(),
+                    )
+                );
             });
         });
 
@@ -62,23 +69,36 @@ export default function VariantSelector({
                 return (
                     <div key={variant.id} className="space-y-2">
                         <div className="flex items-center gap-2 text-[13px]">
-                            <span className="text-slate-500">Pilih {variant.name}:</span>
+                            <span className="text-slate-500">
+                                Pilih {variant.name}:
+                            </span>
                             {selectedValue && (
-                                <span className="font-bold text-slate-900">{selectedValue}</span>
+                                <span className="font-bold text-slate-900">
+                                    {selectedValue}
+                                </span>
                             )}
                         </div>
 
                         <div className="flex flex-wrap gap-2">
                             {variant.options?.map((option) => {
-                                const isSelected = selectedValue === option.value;
-                                const isAvailable = isOptionAvailable(variant.name, option.value);
+                                const isSelected =
+                                    selectedValue === option.value;
+                                const isAvailable = isOptionAvailable(
+                                    variant.name,
+                                    option.value,
+                                );
 
                                 return (
                                     <button
                                         key={option.id}
                                         type="button"
                                         disabled={!isAvailable}
-                                        onClick={() => onSelectOption(variant.name, option.value)}
+                                        onClick={() =>
+                                            onSelectOption(
+                                                variant.name,
+                                                option.value,
+                                            )
+                                        }
                                         className={`group relative flex cursor-pointer items-center gap-2 rounded-lg border px-3.5 py-2 text-[13px] font-semibold transition-all duration-150 ${
                                             isSelected
                                                 ? 'border-[#03ac0e] bg-emerald-50/50 text-[#03ac0e] shadow-xs'
@@ -98,7 +118,11 @@ export default function VariantSelector({
                                         <span>{option.value}</span>
 
                                         {isSelected && (
-                                            <Check size={14} className="text-[#03ac0e]" strokeWidth={3} />
+                                            <Check
+                                                size={14}
+                                                className="text-[#03ac0e]"
+                                                strokeWidth={3}
+                                            />
                                         )}
                                     </button>
                                 );

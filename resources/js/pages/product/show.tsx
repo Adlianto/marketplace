@@ -100,7 +100,9 @@ export default function ProductShow({
     product,
     relatedProducts,
 }: ProductShowProps) {
-    const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
+    const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
+        null,
+    );
     const [modalData, setModalData] = useState<{
         images: string[];
         index: number;
@@ -122,9 +124,9 @@ export default function ProductShow({
         product.skus.length > 0,
     );
 
-    const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() =>
-        getInitialVariantOptions(product),
-    );
+    const [selectedOptions, setSelectedOptions] = useState<
+        Record<string, string>
+    >(() => getInitialVariantOptions(product));
 
     const [prevProductId, setPrevProductId] = useState(product?.id);
 
@@ -155,14 +157,22 @@ export default function ProductShow({
             return null;
         }
 
-        const key = product.variants!.map((v) => selectedOptions[v.name]).join('-');
+        const key = product
+            .variants!.map((v) => selectedOptions[v.name])
+            .join('-');
 
         return (
             product.skus.find(
                 (s) => s.combination_key.toLowerCase() === key.toLowerCase(),
             ) ?? null
         );
-    }, [hasVariants, isSelectionComplete, product.variants, product.skus, selectedOptions]);
+    }, [
+        hasVariants,
+        isSelectionComplete,
+        product.variants,
+        product.skus,
+        selectedOptions,
+    ]);
 
     const activeImage =
         selectedThumbnail ||
@@ -237,7 +247,8 @@ export default function ProductShow({
         const element = document.getElementById(id);
 
         if (element) {
-            const y = element.getBoundingClientRect().top + window.scrollY - 120;
+            const y =
+                element.getBoundingClientRect().top + window.scrollY - 120;
             window.scrollTo({ top: y, behavior: 'smooth' });
         }
     };
@@ -248,7 +259,10 @@ export default function ProductShow({
             prev
                 ? {
                       ...prev,
-                      index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1,
+                      index:
+                          prev.index === 0
+                              ? prev.images.length - 1
+                              : prev.index - 1,
                   }
                 : null,
         );
@@ -260,13 +274,18 @@ export default function ProductShow({
             prev
                 ? {
                       ...prev,
-                      index: prev.index === prev.images.length - 1 ? 0 : prev.index + 1,
+                      index:
+                          prev.index === prev.images.length - 1
+                              ? 0
+                              : prev.index + 1,
                   }
                 : null,
         );
     };
 
-    const currentPrice = activeSku ? Number(activeSku.price) : Number(product?.price || 0);
+    const currentPrice = activeSku
+        ? Number(activeSku.price)
+        : Number(product?.price || 0);
     const currentOriginalPrice = activeSku?.original_price
         ? Number(activeSku.original_price)
         : product?.original_price
@@ -274,11 +293,14 @@ export default function ProductShow({
           : null;
 
     const rawStock = hasVariants
-        ? (activeSku ? activeSku.stock : 0)
+        ? activeSku
+            ? activeSku.stock
+            : 0
         : (product?.stock ?? 143);
     const stock = Math.max(0, rawStock);
 
-    const effectiveQuantity = stock <= 0 ? 0 : Math.min(Math.max(1, quantity), stock);
+    const effectiveQuantity =
+        stock <= 0 ? 0 : Math.min(Math.max(1, quantity), stock);
 
     const sold = product?.sold_count ?? 40;
     const ratingDisplay = product?.rating_avg ?? product?.rating ?? 5.0;
@@ -511,7 +533,9 @@ export default function ProductShow({
                                     {galleryImages.map((img, i) => (
                                         <div
                                             key={i}
-                                            onClick={() => setSelectedThumbnail(img)}
+                                            onClick={() =>
+                                                setSelectedThumbnail(img)
+                                            }
                                             className={`h-16 w-16 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 p-0.5 transition-all duration-200 ${
                                                 activeImage === img
                                                     ? 'border-[#03ac0e] opacity-100'
@@ -566,32 +590,38 @@ export default function ProductShow({
                                     <div className="text-3xl font-extrabold text-slate-900">
                                         {formatRupiah(currentPrice)}
                                     </div>
-                                    {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <span className="rounded bg-rose-100 px-1.5 py-0.5 font-bold text-rose-600">
-                                                {Math.round(
-                                                    ((currentOriginalPrice - currentPrice) /
-                                                        currentOriginalPrice) *
-                                                        100,
-                                                )}
-                                                %
-                                            </span>
-                                            <span className="text-slate-400 line-through">
-                                                {formatRupiah(currentOriginalPrice)}
-                                            </span>
-                                        </div>
-                                    )}
+                                    {currentOriginalPrice &&
+                                        currentOriginalPrice > currentPrice && (
+                                            <div className="flex items-center gap-2 text-xs">
+                                                <span className="rounded bg-rose-100 px-1.5 py-0.5 font-bold text-rose-600">
+                                                    {Math.round(
+                                                        ((currentOriginalPrice -
+                                                            currentPrice) /
+                                                            currentOriginalPrice) *
+                                                            100,
+                                                    )}
+                                                    %
+                                                </span>
+                                                <span className="text-slate-400 line-through">
+                                                    {formatRupiah(
+                                                        currentOriginalPrice,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
                                 </div>
 
                                 {/* Multi-Dimension Variant Selector UI */}
-                                {hasVariants && product.variants && product.skus && (
-                                    <VariantSelector
-                                        variants={product.variants}
-                                        skus={product.skus}
-                                        selectedOptions={selectedOptions}
-                                        onSelectOption={handleSelectOption}
-                                    />
-                                )}
+                                {hasVariants &&
+                                    product.variants &&
+                                    product.skus && (
+                                        <VariantSelector
+                                            variants={product.variants}
+                                            skus={product.skus}
+                                            selectedOptions={selectedOptions}
+                                            onSelectOption={handleSelectOption}
+                                        />
+                                    )}
 
                                 <div className="flex gap-6 border-b border-slate-200 text-[13px] font-bold">
                                     <button
@@ -920,7 +950,9 @@ export default function ProductShow({
                             {/* Ringkasan varian terpilih */}
                             {hasVariants && activeSku && (
                                 <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs">
-                                    <span className="text-slate-500">Varian:</span>
+                                    <span className="text-slate-500">
+                                        Varian:
+                                    </span>
                                     <span className="font-bold text-slate-900">
                                         {activeSku.combination_key}
                                     </span>
@@ -933,7 +965,9 @@ export default function ProductShow({
                                         onClick={() =>
                                             handleQuantityChange('dec')
                                         }
-                                        disabled={effectiveQuantity <= 1 || stock <= 0}
+                                        disabled={
+                                            effectiveQuantity <= 1 || stock <= 0
+                                        }
                                         className="cursor-pointer p-1 text-slate-500 transition hover:text-[#03ac0e] disabled:opacity-30"
                                     >
                                         <Minus size={16} />
@@ -945,7 +979,10 @@ export default function ProductShow({
                                         onClick={() =>
                                             handleQuantityChange('inc')
                                         }
-                                        disabled={effectiveQuantity >= stock || stock <= 0}
+                                        disabled={
+                                            effectiveQuantity >= stock ||
+                                            stock <= 0
+                                        }
                                         className="cursor-pointer p-1 text-[#03ac0e] transition hover:text-emerald-700 disabled:opacity-30"
                                     >
                                         <Plus size={16} />
