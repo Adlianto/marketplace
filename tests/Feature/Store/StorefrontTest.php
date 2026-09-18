@@ -38,6 +38,51 @@ test('guest can access public storefront of an active store', function () {
     );
 });
 
+test('authenticated buyer can also view public storefront', function () {
+    $buyer = User::factory()->create();
+    $store = Store::factory()->create([
+        'name' => 'Toko Buku Nusantara',
+        'slug' => 'toko-buku-nusantara',
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($buyer)->get(route('store.show', 'toko-buku-nusantara'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('store/show')
+        ->where('store.slug', 'toko-buku-nusantara')
+    );
+});
+
+test('storefront paginates product catalog with 16 items per page', function () {
+    $seller = User::factory()->create();
+    $store = Store::factory()->create([
+        'user_id' => $seller->id,
+        'slug' => 'toko-banyak-produk',
+        'status' => 'active',
+    ]);
+
+    $category = Category::factory()->create();
+
+    Product::factory()->count(20)->create([
+        'store_id' => $store->id,
+        'category_id' => $category->id,
+    ]);
+
+    $response = $this->get(route('store.show', 'toko-banyak-produk'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('store.slug', 'toko-banyak-produk')
+        ->has('products.data', 16)
+        ->where('products.total', 20)
+        ->where('products.per_page', 16)
+        ->where('products.current_page', 1)
+        ->where('products.last_page', 2)
+    );
+});
+
 test('storefront returns 404 if store slug does not exist', function () {
     $response = $this->get(route('store.show', 'toko-tidak-ada-di-dunia'));
 
