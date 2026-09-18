@@ -10,6 +10,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Seller\SellerDashboardController;
 use App\Http\Controllers\Seller\SellerSettingController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\StorefrontController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ use Inertia\Response;
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/toko/{slug}', [StorefrontController::class, 'show'])->name('store.show');
 
 // Cart Routes
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
