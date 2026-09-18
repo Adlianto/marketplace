@@ -64,6 +64,41 @@ export interface ProductReview {
     updated_at?: string;
 }
 
+export interface VariantOption {
+    id: number;
+    variant_id: number;
+    value: string;
+    image?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    variant?: ProductVariant;
+}
+
+export interface ProductVariant {
+    id: number;
+    product_id: number;
+    name: string;
+    created_at?: string;
+    updated_at?: string;
+    product?: Product;
+    options?: VariantOption[];
+}
+
+export interface ProductSku {
+    id: number;
+    product_id: number;
+    sku_code: string;
+    combination_key: string;
+    price: number | string;
+    original_price?: number | string | null;
+    stock: number;
+    weight_gram: number;
+    image?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    product?: Product;
+}
+
 export interface Product {
     id: number;
     store_id?: number | null;
@@ -86,6 +121,8 @@ export interface Product {
     category?: Category;
     specifications?: ProductSpecification[];
     reviews?: ProductReview[];
+    variants?: ProductVariant[];
+    skus?: ProductSku[];
     created_at?: string;
     updated_at?: string;
 }
