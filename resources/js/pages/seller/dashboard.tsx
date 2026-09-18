@@ -8,9 +8,7 @@ import {
     Settings,
     ExternalLink,
     Plus,
-    AlertCircle,
     CheckCircle2,
-    Clock,
 } from 'lucide-react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
@@ -29,6 +27,7 @@ interface SellerDashboardProps {
 
 const formatRupiah = (val: number | string) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
+
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -36,142 +35,193 @@ const formatRupiah = (val: number | string) => {
     }).format(num || 0);
 };
 
-export default function SellerDashboard({ store, metrics, recent_products = [] }: SellerDashboardProps) {
+export default function SellerDashboard({
+    store,
+    metrics,
+    recent_products = [],
+}: SellerDashboardProps) {
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between">
+        <div className="flex min-h-screen flex-col justify-between bg-slate-50 text-slate-900">
             <Head title={`Seller Dashboard - ${store.name}`} />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
+            <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
                 {/* Store Header Summary */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="mb-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center">
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50">
                             {store.logo ? (
-                                <img src={store.logo} alt={store.name} className="w-full h-full object-cover" />
+                                <img
+                                    src={store.logo}
+                                    alt={store.name}
+                                    className="h-full w-full object-cover"
+                                />
                             ) : (
-                                <StoreIcon className="w-8 h-8 text-emerald-600" />
+                                <StoreIcon className="h-8 w-8 text-emerald-600" />
                             )}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-slate-900">{store.name}</h1>
+                                <h1 className="text-xl font-bold text-slate-900">
+                                    {store.name}
+                                </h1>
                                 <span
-                                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                         store.status === 'active'
-                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                            ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                                            : 'border border-amber-200 bg-amber-50 text-amber-700'
                                     }`}
                                 >
-                                    {store.status === 'active' ? 'Toko Buka' : 'Toko Libur'}
+                                    {store.status === 'active'
+                                        ? 'Toko Buka'
+                                        : 'Toko Libur'}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                            <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
                                 <span>Gudang Asal:</span>
-                                <strong className="text-slate-700 font-semibold">{store.city}</strong>
+                                <strong className="font-semibold text-slate-700">
+                                    {store.city}
+                                </strong>
                                 <span>•</span>
                                 <span>Slug: /toko/{store.slug}</span>
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5 w-full md:w-auto">
+                    <div className="flex w-full items-center gap-2.5 md:w-auto">
                         <Link
                             href={`/toko/${store.slug}`}
-                            className="flex-1 md:flex-initial px-4 py-2 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 text-xs font-medium rounded-xl flex items-center justify-center gap-1.5 transition"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-900 md:flex-initial"
                         >
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="h-3.5 w-3.5" />
                             <span>Lihat Toko Publik</span>
                         </Link>
                         <Link
                             href="/seller/settings"
-                            className="flex-1 md:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-xl flex items-center justify-center gap-1.5 transition shadow-sm"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-emerald-700 md:flex-initial"
                         >
-                            <Settings className="w-3.5 h-3.5" />
+                            <Settings className="h-3.5 w-3.5" />
                             <span>Pengaturan Toko & Gudang</span>
                         </Link>
                     </div>
                 </div>
 
                 {/* Performance Metric Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Active Products */}
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div>
-                            <p className="text-xs font-medium text-slate-500">Total Produk Aktif</p>
-                            <h3 className="text-2xl font-bold text-slate-900 mt-1">{metrics.active_products_count}</h3>
-                            <span className="text-[11px] text-emerald-600 mt-1 inline-block">Siap diperjualbelikan</span>
+                            <p className="text-xs font-medium text-slate-500">
+                                Total Produk Aktif
+                            </p>
+                            <h3 className="mt-1 text-2xl font-bold text-slate-900">
+                                {metrics.active_products_count}
+                            </h3>
+                            <span className="mt-1 inline-block text-[11px] text-emerald-600">
+                                Siap diperjualbelikan
+                            </span>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                            <Package className="w-6 h-6" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <Package className="h-6 w-6" />
                         </div>
                     </div>
 
                     {/* Incoming Orders */}
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div>
-                            <p className="text-xs font-medium text-slate-500">Pesanan Masuk</p>
-                            <h3 className="text-2xl font-bold text-slate-900 mt-1">{metrics.incoming_orders_count}</h3>
-                            <span className="text-[11px] text-slate-400 mt-1 inline-block">Total pesanan toko</span>
+                            <p className="text-xs font-medium text-slate-500">
+                                Pesanan Masuk
+                            </p>
+                            <h3 className="mt-1 text-2xl font-bold text-slate-900">
+                                {metrics.incoming_orders_count}
+                            </h3>
+                            <span className="mt-1 inline-block text-[11px] text-slate-400">
+                                Total pesanan toko
+                            </span>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                            <ShoppingBag className="w-6 h-6" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                            <ShoppingBag className="h-6 w-6" />
                         </div>
                     </div>
 
                     {/* Orders to Ship */}
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div>
-                            <p className="text-xs font-medium text-slate-500">Perlu Dikirim</p>
-                            <h3 className="text-2xl font-bold text-slate-900 mt-1">{metrics.orders_to_ship_count}</h3>
-                            <span className="text-[11px] text-amber-600 mt-1 inline-block">Menunggu nomor resi</span>
+                            <p className="text-xs font-medium text-slate-500">
+                                Perlu Dikirim
+                            </p>
+                            <h3 className="mt-1 text-2xl font-bold text-slate-900">
+                                {metrics.orders_to_ship_count}
+                            </h3>
+                            <span className="mt-1 inline-block text-[11px] text-amber-600">
+                                Menunggu nomor resi
+                            </span>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                            <Truck className="w-6 h-6" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                            <Truck className="h-6 w-6" />
                         </div>
                     </div>
 
                     {/* Wallet Balance */}
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div>
-                            <p className="text-xs font-medium text-slate-500">Saldo Dompet Toko</p>
-                            <h3 className="text-2xl font-bold text-slate-900 mt-1">{formatRupiah(metrics.wallet_balance)}</h3>
-                            <span className="text-[11px] text-emerald-600 mt-1 inline-block">Siap ditarik</span>
+                            <p className="text-xs font-medium text-slate-500">
+                                Saldo Dompet Toko
+                            </p>
+                            <h3 className="mt-1 text-2xl font-bold text-slate-900">
+                                {formatRupiah(metrics.wallet_balance)}
+                            </h3>
+                            <span className="mt-1 inline-block text-[11px] text-emerald-600">
+                                Siap ditarik
+                            </span>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                            <Wallet className="w-6 h-6" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <Wallet className="h-6 w-6" />
                         </div>
                     </div>
                 </div>
 
                 {/* Quick Notice Banner */}
-                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-5 mb-8 flex items-start gap-3.5">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <div className="text-xs text-slate-700 space-y-1">
-                        <strong className="text-slate-900 font-semibold text-sm block">
+                <div className="mb-8 flex items-start gap-3.5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-5">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                    <div className="space-y-1 text-xs text-slate-700">
+                        <strong className="block text-sm font-semibold text-slate-900">
                             Gudang Logistik Asal Toko Aktif
                         </strong>
                         <p>
                             Alamat gudang asal penjemputan barang berlokasi di{' '}
-                            <span className="font-semibold text-slate-800">{store.origin_address}, {store.city} ({store.postal_code})</span>.
-                            Kurir logistik Tokopedia-grade akan menggunakan koordinat dan titik ini untuk kalkulasi ongkos kirim.
+                            <span className="font-semibold text-slate-800">
+                                {store.origin_address}, {store.city} (
+                                {store.postal_code})
+                            </span>
+                            . Kurir logistik Tokopedia-grade akan menggunakan
+                            koordinat dan titik ini untuk kalkulasi ongkos
+                            kirim.
                         </p>
                     </div>
                 </div>
 
                 {/* Catalog Overview Section */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-100 p-6">
                         <div>
-                            <h2 className="text-base font-bold text-slate-900">Katalog Produk Terkini</h2>
-                            <p className="text-xs text-slate-500 mt-0.5">Produk yang terdaftar di bawah kendali toko Anda</p>
+                            <h2 className="text-base font-bold text-slate-900">
+                                Katalog Produk Terkini
+                            </h2>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                Produk yang terdaftar di bawah kendali toko Anda
+                            </p>
                         </div>
                         <button
                             type="button"
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-xl flex items-center gap-1.5 transition"
-                            onClick={() => alert('Fitur penambahan produk toko akan hadir di modul katalog.')}
+                            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-700"
+                            onClick={() =>
+                                alert(
+                                    'Fitur penambahan produk toko akan hadir di modul katalog.',
+                                )
+                            }
                         >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Plus className="h-3.5 w-3.5" />
                             <span>Tambah Produk</span>
                         </button>
                     </div>
@@ -179,39 +229,58 @@ export default function SellerDashboard({ store, metrics, recent_products = [] }
                     {recent_products.length > 0 ? (
                         <div className="divide-y divide-slate-100">
                             {recent_products.map((product) => (
-                                <div key={product.id} className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50/50 transition">
+                                <div
+                                    key={product.id}
+                                    className="flex items-center justify-between p-4 transition hover:bg-slate-50/50 sm:p-5"
+                                >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                                             <img
-                                                src={product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500'}
+                                                src={
+                                                    product.image ||
+                                                    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500'
+                                                }
                                                 alt={product.title}
-                                                className="w-full h-full object-cover"
+                                                className="h-full w-full object-cover"
                                             />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-semibold text-slate-800 line-clamp-1">{product.title}</h4>
-                                            <p className="text-xs text-slate-400 mt-0.5">
-                                                Stok: <span className="font-semibold text-slate-600">{product.stock ?? 0}</span> • Harga:{' '}
-                                                <span className="font-semibold text-emerald-600">{formatRupiah(product.price)}</span>
+                                            <h4 className="line-clamp-1 text-sm font-semibold text-slate-800">
+                                                {product.title}
+                                            </h4>
+                                            <p className="mt-0.5 text-xs text-slate-400">
+                                                Stok:{' '}
+                                                <span className="font-semibold text-slate-600">
+                                                    {product.stock ?? 0}
+                                                </span>{' '}
+                                                • Harga:{' '}
+                                                <span className="font-semibold text-emerald-600">
+                                                    {formatRupiah(
+                                                        product.price,
+                                                    )}
+                                                </span>
                                             </p>
                                         </div>
                                     </div>
                                     <Link
                                         href={`/products/${product.id}`}
-                                        className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                                        className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
                                     >
                                         <span>Lihat PDP</span>
-                                        <ExternalLink className="w-3 h-3" />
+                                        <ExternalLink className="h-3 w-3" />
                                     </Link>
                                 </div>
                             ))}
                         </div>
                     ) : (
                         <div className="py-12 text-center">
-                            <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                            <h4 className="text-sm font-semibold text-slate-700">Belum ada produk di toko ini</h4>
-                            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                                Mulai jual produk pertama Anda dan raih pembeli dari seluruh penjuru Indonesia.
+                            <Package className="mx-auto mb-3 h-12 w-12 text-slate-300" />
+                            <h4 className="text-sm font-semibold text-slate-700">
+                                Belum ada produk di toko ini
+                            </h4>
+                            <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
+                                Mulai jual produk pertama Anda dan raih pembeli
+                                dari seluruh penjuru Indonesia.
                             </p>
                         </div>
                     )}

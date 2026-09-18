@@ -7,11 +7,21 @@ import Navbar from '@/components/navbar';
 import type { Address, User } from '@/types';
 
 const BiodataTab = lazy(() => import('@/components/dashboard/tabs/biodata'));
-const AlamatTab = lazy(() => import('@/components/dashboard/tabs/tambahAlamat'));
-const PembayaranTab = lazy(() => import('@/components/dashboard/tabs/pembayaran'));
-const RekeningTab = lazy(() => import('@/components/dashboard/tabs/rekeningBank'));
-const NotifikasiTab = lazy(() => import('@/components/dashboard/tabs/notifikasi'));
-const TampilanTab = lazy(() => import('@/components/dashboard/tabs/personalisasi'));
+const AlamatTab = lazy(
+    () => import('@/components/dashboard/tabs/tambahAlamat'),
+);
+const PembayaranTab = lazy(
+    () => import('@/components/dashboard/tabs/pembayaran'),
+);
+const RekeningTab = lazy(
+    () => import('@/components/dashboard/tabs/rekeningBank'),
+);
+const NotifikasiTab = lazy(
+    () => import('@/components/dashboard/tabs/notifikasi'),
+);
+const TampilanTab = lazy(
+    () => import('@/components/dashboard/tabs/personalisasi'),
+);
 const KeamananTab = lazy(() => import('@/components/dashboard/tabs/keamanan'));
 
 interface DashboardProps {
@@ -19,7 +29,9 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ addresses = [] }: DashboardProps) {
-    const { auth } = usePage().props as unknown as { auth: { user: User | null } };
+    const { auth } = usePage().props as unknown as {
+        auth: { user: User | null };
+    };
     const user = auth.user;
 
     const defaultAvatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'Bell'}`;

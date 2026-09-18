@@ -4,7 +4,6 @@ namespace App\Actions\Store;
 
 use App\Models\Store;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class OpenStoreAction
@@ -24,6 +23,7 @@ class OpenStoreAction
     public function execute(User $user, array $data): Store
     {
         return DB::transaction(function () use ($user, $data): Store {
+            /** @var Store $store */
             $store = Store::create([
                 'user_id' => $user->id,
                 'name' => $data['name'],
@@ -36,16 +36,6 @@ class OpenStoreAction
                 'is_official' => false,
                 'power_merchant' => false,
             ]);
-
-            // Hook for StoreWallet initialization if table/model exists (Phase 9)
-            if (class_exists('App\Models\StoreWallet')) {
-                /** @var class-string<Model> $walletClass */
-                $walletClass = 'App\Models\StoreWallet';
-                $walletClass::create([
-                    'store_id' => $store->id,
-                    'balance' => 0,
-                ]);
-            }
 
             return $store;
         });

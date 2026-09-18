@@ -35,7 +35,10 @@ class StoreController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $action->execute($user, $request->validated());
+        /** @var array{name: string, slug: string, city: string, postal_code: string, origin_address: string, description?: string|null} $data */
+        $data = $request->validated();
+
+        $action->execute($user, $data);
 
         return to_route('seller.dashboard')->with('success', 'Selamat! Toko Anda berhasil dibuka.');
     }

@@ -29,6 +29,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Collection<int, ProductSpecification> $specifications
  * @property-read Collection<int, ProductReview> $reviews
  * @property-read Collection<int, Cart> $carts
+ * @property-read Collection<int, ProductVariant> $variants
+ * @property-read Collection<int, ProductSku> $skus
  */
 class Product extends Model
 {
@@ -88,5 +90,21 @@ class Product extends Model
     public function carts(): HasMany
     {
         return $this->hasMany(Cart::class);
+    }
+
+    /**
+     * @return HasMany<ProductVariant, $this>
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * @return HasMany<ProductSku, $this>
+     */
+    public function skus(): HasMany
+    {
+        return $this->hasMany(ProductSku::class);
     }
 }
