@@ -8,6 +8,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Seller\SellerDashboardController;
+use App\Http\Controllers\Seller\SellerProductController;
 use App\Http\Controllers\Seller\SellerSettingController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StorefrontController;
@@ -73,6 +74,7 @@ Route::middleware(['auth', 'verified', 'has.store'])->prefix('seller')->name('se
     Route::get('/dashboard', [SellerDashboardController::class, 'index'])->name('dashboard');
     Route::get('/settings', [SellerSettingController::class, 'edit'])->name('settings.edit');
     Route::patch('/settings', [SellerSettingController::class, 'update'])->name('settings.update');
+    Route::post('/products', [SellerProductController::class, 'store'])->name('products.store');
 });
 
 if (file_exists(__DIR__.'/settings.php')) {
