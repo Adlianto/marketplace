@@ -6,6 +6,7 @@ use Database\Factories\SubOrderItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -87,5 +88,13 @@ class SubOrderItem extends Model
     public function sku(): BelongsTo
     {
         return $this->productSku();
+    }
+
+    /**
+     * @return HasOne<ProductReview, $this>
+     */
+    public function review(): HasOne
+    {
+        return $this->hasOne(ProductReview::class);
     }
 }

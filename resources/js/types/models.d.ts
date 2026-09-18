@@ -18,6 +18,7 @@ export interface Store {
     updated_at?: string;
     user?: User;
     products?: Product[];
+    wallet?: StoreWallet | null;
 }
 
 export interface User {
@@ -56,12 +57,17 @@ export interface ProductSpecification {
 export interface ProductReview {
     id: number;
     product_id: number;
+    user_id?: number | null;
+    sub_order_item_id?: number | null;
     user_name: string;
-    user_avatar?: string;
+    user_avatar?: string | null;
     rating: number;
+    review?: string;
     comment: string;
+    photos?: string[] | null;
     created_at: string;
     updated_at?: string;
+    is_verified_purchase?: boolean;
 }
 
 export interface VariantOption {
@@ -203,6 +209,7 @@ export interface SubOrderItem {
     product?: Product;
     productSku?: ProductSku | null;
     sku?: ProductSku | null;
+    review?: ProductReview | null;
 }
 
 export interface SubOrder {
@@ -237,6 +244,9 @@ export interface SubOrder {
     user?: User;
     address?: Address;
     items?: SubOrderItem[];
+    wallet_transactions?: WalletTransaction[];
+    dispute_ticket?: DisputeTicket | null;
+    dispute?: DisputeTicket | null;
 }
 
 export interface OrderGroup {
@@ -325,3 +335,45 @@ export interface PaginatedData<T> {
     total: number;
     per_page?: number;
 }
+
+export interface StoreWallet {
+    id: number;
+    store_id: number;
+    balance: number | string;
+    created_at?: string;
+    updated_at?: string;
+    store?: Store;
+    transactions?: WalletTransaction[];
+}
+
+export interface WalletTransaction {
+    id: number;
+    store_wallet_id: number;
+    sub_order_id?: number | null;
+    type: 'credit' | 'debit';
+    amount: number | string;
+    description: string;
+    created_at?: string;
+    updated_at?: string;
+    wallet?: StoreWallet;
+    sub_order?: SubOrder | null;
+}
+
+export interface DisputeTicket {
+    id: number;
+    sub_order_id: number;
+    user_id: number;
+    store_id: number;
+    reason: string;
+    description: string;
+    evidence_photos: string[];
+    status: 'open' | 'negotiation' | 'resolved_refund' | 'resolved_completed' | 'cancelled' | string;
+    solution?: string | null;
+    created_at: string;
+    updated_at?: string;
+    sub_order?: SubOrder;
+    subOrder?: SubOrder;
+    user?: User;
+    store?: Store;
+}
+

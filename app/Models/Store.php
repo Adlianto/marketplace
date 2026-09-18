@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -31,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property-read User $user
  * @property-read Collection<int, Product> $products
  * @property-read Collection<int, SubOrder> $subOrders
+ * @property-read StoreWallet|null $wallet
  */
 class Store extends Model
 {
@@ -96,5 +98,13 @@ class Store extends Model
     public function subOrders(): HasMany
     {
         return $this->hasMany(SubOrder::class);
+    }
+
+    /**
+     * @return HasOne<StoreWallet, $this>
+     */
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(StoreWallet::class);
     }
 }

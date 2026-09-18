@@ -115,6 +115,7 @@ export default function ProductShow({
     );
     const [isCopiedMain, setIsCopiedMain] = useState(false);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [previewModalPhoto, setPreviewModalPhoto] = useState<string | null>(null);
 
     const hasVariants = Boolean(
         product?.has_variants &&
@@ -884,7 +885,11 @@ export default function ProductShow({
                                                                         <div className="h-8 w-8 overflow-hidden rounded-full border border-slate-100 bg-slate-200">
                                                                             <img
                                                                                 src={
-                                                                                    rev.user_avatar
+                                                                                    rev.user_avatar ||
+                                                                                    `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(
+                                                                                        rev.user_name ||
+                                                                                            'User',
+                                                                                    )}`
                                                                                 }
                                                                                 alt={
                                                                                     rev.user_name
@@ -893,18 +898,70 @@ export default function ProductShow({
                                                                             />
                                                                         </div>
                                                                         <div>
-                                                                            <p className="text-[13px] leading-tight font-bold text-slate-800">
-                                                                                {
-                                                                                    rev.user_name
-                                                                                }
-                                                                            </p>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <p className="text-[13px] leading-tight font-bold text-slate-800">
+                                                                                    {
+                                                                                        rev.user_name
+                                                                                    }
+                                                                                </p>
+                                                                                {(rev.sub_order_item_id ||
+                                                                                    rev.is_verified_purchase) && (
+                                                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                                                                        <Check
+                                                                                            size={
+                                                                                                11
+                                                                                            }
+                                                                                            className="stroke-[2.5]"
+                                                                                        />
+                                                                                        Verified Purchase
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                     <p className="mb-3 text-[13px] leading-relaxed text-slate-700">
                                                                         {
-                                                                            rev.comment
+                                                                            rev.review ||
+                                                                                rev.comment
                                                                         }
                                                                     </p>
+                                                                    {rev.photos &&
+                                                                        Array.isArray(
+                                                                            rev.photos,
+                                                                        ) &&
+                                                                        rev.photos
+                                                                            .length >
+                                                                            0 && (
+                                                                            <div className="mb-3 flex flex-wrap gap-2">
+                                                                                {rev.photos.map(
+                                                                                    (
+                                                                                        photo,
+                                                                                        pIdx,
+                                                                                    ) => (
+                                                                                        <button
+                                                                                            key={
+                                                                                                pIdx
+                                                                                            }
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                setPreviewModalPhoto(
+                                                                                                    photo,
+                                                                                                )
+                                                                                            }
+                                                                                            className="group relative h-16 w-16 overflow-hidden rounded-lg border border-slate-200 cursor-pointer hover:opacity-90 transition"
+                                                                                        >
+                                                                                            <img
+                                                                                                src={
+                                                                                                    photo
+                                                                                                }
+                                                                                                alt={`Foto ulasan ${pIdx + 1}`}
+                                                                                                className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+                                                                                            />
+                                                                                        </button>
+                                                                                    ),
+                                                                                )}
+                                                                            </div>
+                                                                        )}
                                                                     <div className="flex items-center justify-between text-slate-400">
                                                                         <button className="flex cursor-pointer items-center gap-1.5 text-[11px] font-bold transition hover:text-[#03ac0e]">
                                                                             <ThumbsUp
@@ -1317,6 +1374,32 @@ export default function ProductShow({
                     </LazySection>
                 </div>
             </main>
+
+            {/* Modal Preview Foto Lampiran Ulasan */}
+            {previewModalPhoto && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs animate-in fade-in"
+                    onClick={() => setPreviewModalPhoto(null)}
+                >
+                    <div
+                        className="relative max-h-[85vh] max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setPreviewModalPhoto(null)}
+                            className="absolute top-3 right-3 z-10 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80 transition"
+                        >
+                            <X size={18} />
+                        </button>
+                        <img
+                            src={previewModalPhoto}
+                            alt="Lampiran ulasan"
+                            className="max-h-[80vh] w-auto object-contain"
+                        />
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </div>

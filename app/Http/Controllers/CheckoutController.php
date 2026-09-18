@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\Checkout\ProcessCheckoutAction;
 use App\Actions\Checkout\ProcessMultiStoreCheckoutAction;
+use App\Actions\Payment\CreateMidtransSnapTokenAction;
 use App\Http\Requests\Checkout\ProcessCheckoutRequest;
 use App\Http\Requests\Checkout\ProcessMultiCheckoutRequest;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\User;
 use App\Services\Cart\CartGroupingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -87,10 +89,26 @@ class CheckoutController extends Controller
     public function processMulti(
         ProcessMultiCheckoutRequest $request,
         ProcessMultiStoreCheckoutAction $action,
-    ): RedirectResponse {
+        CreateMidtransSnapTokenAction $snapTokenAction,
+    ): JsonResponse|RedirectResponse {
         /** @var User $user */
         $user = $request->user();
         $orderGroup = $action->execute($user, $request->validated());
+
+        try {
+            $snapToken = $snapTokenAction->execute($orderGroup);
+        } catch (\Throwable) {
+            $snapToken = $orderGroup->snap_token;
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Grup Pesanan #{$orderGroup->group_code} berhasil dibuat!",
+                'order_group' => $orderGroup,
+                'snap_token' => $snapToken,
+            ]);
+        }
 
         return redirect()->route('dashboard')->with('success', "Grup Pesanan #{$orderGroup->group_code} berhasil dibuat!");
     }

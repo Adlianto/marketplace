@@ -11,6 +11,7 @@ import type { Address, CartItem, StoreCartGroup, StoreShippingState } from '@/ty
 import StoreOrderSection from '@/components/checkout/StoreOrderSection';
 import PaymentSummaryCard from '@/components/checkout/PaymentSummaryCard';
 import { calculateShippingCost } from '@/components/checkout/CourierSelector';
+import useMidtransSnap from '@/hooks/useMidtransSnap';
 
 interface CheckoutProps {
     items: CartItem[];
@@ -157,8 +158,14 @@ export default function CheckoutPage({
     const [processing, setProcessing] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // 6. Submit Multi-Store Checkout
-    const handleSubmit = () => {
+    // Midtrans Snap Modal Hook
+    const { pay, isPaying, snapError, setSnapError } = useMidtransSnap({
+        onSuccessRedirectUrl: '/dashboard',
+        onPendingRedirectUrl: '/dashboard',
+    });
+
+    // 6. Submit Multi-Store Checkout with Snap Payment Integration
+    const handleSubmit = async () => {
         if (!selectedAddressId) {
             setErrorMessage('Silakan pilih alamat pengiriman.');
             return;
@@ -166,6 +173,7 @@ export default function CheckoutPage({
 
         setProcessing(true);
         setErrorMessage(null);
+        setSnapError(null);
 
         const payload = {
             address_id: Number(selectedAddressId),
@@ -185,19 +193,57 @@ export default function CheckoutPage({
             notes: notes.trim() || undefined,
         };
 
-        router.post('/checkout/multi', payload, {
-            preserveScroll: true,
-            onError: (errors) => {
-                setProcessing(false);
-                const firstError = Object.values(errors)[0];
-                if (firstError) {
-                    setErrorMessage(String(firstError));
-                }
-            },
-            onFinish: () => {
-                setProcessing(false);
-            },
-        });
+        const csrfToken =
+            (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+
+        try {
+            const response = await fetch('/checkout/multi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = (await response.json()) as {
+                    message?: string;
+                    errors?: Record<string, string[]>;
+                };
+                const firstErr = errorData.errors
+                    ? Object.values(errorData.errors)[0]?.[0]
+                    : errorData.message;
+                throw new Error(firstErr || 'Gagal memproses pesanan.');
+            }
+
+            const data = (await response.json()) as {
+                success: boolean;
+                snap_token?: string | null;
+                order_group?: { group_code: string };
+            };
+
+            if (data.snap_token) {
+                // Tampilkan Snap Modal Popup
+                pay(data.snap_token, {
+                    onClose: () => {
+                        setProcessing(false);
+                    },
+                    onError: (err) => {
+                        setProcessing(false);
+                        setErrorMessage(err.status_message || 'Pembayaran gagal.');
+                    },
+                });
+            } else {
+                // Fallback redirect jika tidak ada snap token
+                router.visit('/dashboard');
+            }
+        } catch (err: unknown) {
+            setProcessing(false);
+            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+            setErrorMessage(msg);
+        }
     };
 
     return (
@@ -402,9 +448,10 @@ export default function CheckoutPage({
                             paymentMethod={paymentMethod}
                             onPaymentMethodChange={setPaymentMethod}
                             onSubmit={handleSubmit}
-                            processing={processing}
+                            processing={processing || isPaying}
+                            disabled={processing || isPaying}
                             hasAddress={Boolean(selectedAddressId)}
-                            errorMessage={errorMessage}
+                            errorMessage={errorMessage || snapError}
                         />
                     </div>
                 </div>

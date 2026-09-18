@@ -4,7 +4,9 @@ import { lazy, Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
-import type { Address, User } from '@/types';
+import type { Address, SubOrder, User } from '@/types';
+
+const PesananTab = lazy(() => import('@/components/dashboard/tabs/pesanan'));
 
 const BiodataTab = lazy(() => import('@/components/dashboard/tabs/biodata'));
 const AlamatTab = lazy(
@@ -26,9 +28,13 @@ const KeamananTab = lazy(() => import('@/components/dashboard/tabs/keamanan'));
 
 interface DashboardProps {
     addresses?: Address[];
+    orders?: SubOrder[];
 }
 
-export default function Dashboard({ addresses = [] }: DashboardProps) {
+export default function Dashboard({
+    addresses = [],
+    orders = [],
+}: DashboardProps) {
     const { auth } = usePage().props as unknown as {
         auth: { user: User | null };
     };
@@ -56,6 +62,8 @@ export default function Dashboard({ addresses = [] }: DashboardProps) {
 
     const renderTab = () => {
         switch (activeTab) {
+            case 'pesanan':
+                return <PesananTab orders={orders} />;
             case 'biodatadiri':
                 return <BiodataTab />;
             case 'daftaralamat':
@@ -76,6 +84,7 @@ export default function Dashboard({ addresses = [] }: DashboardProps) {
     };
 
     const tabs = [
+        { id: 'pesanan', label: 'Pesanan Saya' },
         { id: 'biodatadiri', label: 'Biodata Diri' },
         { id: 'daftaralamat', label: 'Daftar Alamat' },
         { id: 'pembayaran', label: 'Pembayaran' },
