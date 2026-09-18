@@ -76,6 +76,22 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * @return HasMany<OrderGroup, $this>
+     */
+    public function orderGroups(): HasMany
+    {
+        return $this->hasMany(OrderGroup::class);
+    }
+
+    /**
+     * @return HasMany<SubOrder, $this>
+     */
+    public function subOrders(): HasMany
+    {
+        return $this->hasMany(SubOrder::class);
+    }
+
+    /**
      * Determine if the user has an active store.
      */
     public function hasStore(): bool

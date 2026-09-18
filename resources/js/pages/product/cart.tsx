@@ -14,14 +14,16 @@ import {
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
-import type { CartItem, Product } from '@/types';
+import StoreCartSection from '@/components/cart/StoreCartSection';
+import type { CartItem, Product, StoreCartGroup } from '@/types';
 
 interface CartProps {
+    storeGroups?: StoreCartGroup[];
     cartItems?: CartItem[];
     recommendations?: Product[];
 }
 
-const formatRupiah = (val: number | string | null | undefined) => {
+const formatRupiah = (val: number | string | null | undefined): string => {
     const num = typeof val === 'string' ? parseFloat(val) : Number(val);
 
     return new Intl.NumberFormat('id-ID', {
@@ -34,15 +36,18 @@ const formatRupiah = (val: number | string | null | undefined) => {
 function CustomCheckbox({
     checked,
     onChange,
+    'aria-label': ariaLabel,
 }: {
     checked: boolean;
     onChange: () => void;
+    'aria-label'?: string;
 }) {
     return (
         <button
             type="button"
             role="checkbox"
             aria-checked={checked}
+            aria-label={ariaLabel}
             onClick={onChange}
             className={`flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center rounded-[4px] transition-all ${
                 checked
@@ -57,21 +62,91 @@ function CustomCheckbox({
     );
 }
 
+function recalculateGroup(group: StoreCartGroup): StoreCartGroup {
+    let subtotal = 0;
+    let totalWeight = 0;
+    let selectedSubtotal = 0;
+    let selectedWeight = 0;
+    let selectedCount = 0;
+
+    group.items.forEach((it) => {
+        const p = typeof it.price === 'string' ? parseFloat(it.price) : Number(it.price) || 0;
+        const w = it.weight_gram ?? 200;
+        const q = it.quantity || 1;
+        subtotal += p * q;
+        totalWeight += w * q;
+        if (it.selected) {
+            selectedSubtotal += p * q;
+            selectedWeight += w * q;
+            selectedCount += 1;
+        }
+    });
+
+    return {
+        ...group,
+        subtotal,
+        total_weight_gram: totalWeight,
+        selected_subtotal: selectedSubtotal,
+        selected_weight_gram: selectedWeight,
+        selected_count: selectedCount,
+        total_items: group.items.length,
+        is_all_selected: group.items.length > 0 && selectedCount === group.items.length,
+    };
+}
+
+function buildGroupsFromItems(items: CartItem[]): StoreCartGroup[] {
+    const storeMap = new Map<number, { store: StoreCartGroup['store']; items: CartItem[] }>();
+
+    items.forEach((item) => {
+        const storeId = item.store_id ?? (item.product?.store_id ?? 0);
+        const store = item.product?.store;
+
+        if (!storeMap.has(storeId)) {
+            storeMap.set(storeId, {
+                store: {
+                    id: store?.id ?? storeId,
+                    name: store?.name ?? 'Toko Marketplace',
+                    slug: store?.slug ?? '',
+                    city: store?.city || (item.city || 'Jakarta Pusat'),
+                    is_official: Boolean(store?.is_official),
+                    power_merchant: Boolean(store?.power_merchant),
+                    logo: store?.logo,
+                },
+                items: [],
+            });
+        }
+
+        storeMap.get(storeId)!.items.push(item);
+    });
+
+    return Array.from(storeMap.values()).map(({ store, items: storeItems }) => {
+        return recalculateGroup({
+            store,
+            items: storeItems,
+            subtotal: 0,
+            total_weight_gram: 0,
+            selected_subtotal: 0,
+            selected_weight_gram: 0,
+            selected_count: 0,
+            total_items: storeItems.length,
+            is_all_selected: false,
+        });
+    });
+}
+
 export default function Cart({
+    storeGroups: initialStoreGroups = [],
     cartItems: initialCartItems = [],
     recommendations = [],
 }: CartProps) {
-    const safeInitial = Array.isArray(initialCartItems) ? initialCartItems : [];
-    const safeRecommendations = Array.isArray(recommendations)
-        ? recommendations
-        : [];
+    const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
 
-    const [cartItems, setCartItems] = useState<CartItem[]>(() =>
-        safeInitial.map((item) => ({
-            ...item,
-            selected: item.selected ?? true,
-        })),
-    );
+    const [groups, setGroups] = useState<StoreCartGroup[]>(() => {
+        if (Array.isArray(initialStoreGroups) && initialStoreGroups.length > 0) {
+            return initialStoreGroups;
+        }
+        return buildGroupsFromItems(Array.isArray(initialCartItems) ? initialCartItems : []);
+    });
 
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
@@ -91,51 +166,58 @@ export default function Cart({
     }, []);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setCartItems(
-            (Array.isArray(initialCartItems) ? initialCartItems : []).map(
-                (item) => ({
-                    ...item,
-                    selected: item.selected ?? true,
-                }),
-            ),
-        );
-    }, [initialCartItems]);
+        if (Array.isArray(initialStoreGroups) && initialStoreGroups.length > 0) {
+            setGroups(initialStoreGroups);
+        } else if (Array.isArray(initialCartItems)) {
+            setGroups(buildGroupsFromItems(initialCartItems));
+        }
+    }, [initialStoreGroups, initialCartItems]);
+
+    const totalCartItemsCount = useMemo(() => {
+        return groups.reduce((acc, g) => acc + g.items.length, 0);
+    }, [groups]);
 
     const isAllSelected = useMemo(() => {
-        return cartItems.length > 0 && cartItems.every((item) => item.selected);
-    }, [cartItems]);
+        return totalCartItemsCount > 0 && groups.every((g) => g.is_all_selected);
+    }, [groups, totalCartItemsCount]);
 
     const selectedCount = useMemo(() => {
-        return cartItems.filter((item) => item.selected).length;
-    }, [cartItems]);
+        return groups.reduce((acc, g) => acc + g.selected_count, 0);
+    }, [groups]);
 
     const { totalSelectedItems, totalPrice } = useMemo(() => {
         let totalItems = 0;
         let price = 0;
 
-        cartItems.forEach((item) => {
-            if (item && item.selected) {
-                const qty = Number(item.quantity) || 1;
-                const unitPrice =
-                    typeof item.price === 'string'
-                        ? parseFloat(item.price)
-                        : Number(item.price) || 0;
-                totalItems += qty;
-                price += unitPrice * qty;
-            }
+        groups.forEach((g) => {
+            g.items.forEach((item) => {
+                if (item && item.selected) {
+                    const qty = Number(item.quantity) || 1;
+                    const unitPrice =
+                        typeof item.price === 'string'
+                            ? parseFloat(item.price)
+                            : Number(item.price) || 0;
+                    totalItems += qty;
+                    price += unitPrice * qty;
+                }
+            });
         });
 
         return {
             totalSelectedItems: totalItems,
             totalPrice: price,
         };
-    }, [cartItems]);
+    }, [groups]);
 
     const handleSelectAll = () => {
         const nextState = !isAllSelected;
-        setCartItems((prev) =>
-            prev.map((item) => ({ ...item, selected: nextState })),
+        setGroups((prev) =>
+            prev.map((g) =>
+                recalculateGroup({
+                    ...g,
+                    items: g.items.map((it) => ({ ...it, selected: nextState })),
+                }),
+            ),
         );
 
         router.post(
@@ -149,14 +231,60 @@ export default function Cart({
         );
     };
 
-    const handleToggleItem = (id: number) => {
-        const target = cartItems.find((item) => item.id === id);
-        const nextSelected = target ? !target.selected : false;
+    const handleToggleStore = (storeId: number) => {
+        const targetGroup = groups.find((g) => g.store.id === storeId);
+        if (!targetGroup) {
+            return;
+        }
 
-        setCartItems((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, selected: nextSelected } : item,
-            ),
+        const nextSelected = !targetGroup.is_all_selected;
+
+        setGroups((prev) =>
+            prev.map((g) => {
+                if (g.store.id === storeId) {
+                    return recalculateGroup({
+                        ...g,
+                        items: g.items.map((it) => ({ ...it, selected: nextSelected })),
+                    });
+                }
+                return g;
+            }),
+        );
+
+        router.post(
+            '/cart/toggle-store',
+            { store_id: storeId, selected: nextSelected },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                showProgress: false,
+            },
+        );
+    };
+
+    const handleToggleItem = (id: number) => {
+        let nextSelected = false;
+
+        setGroups((prev) =>
+            prev.map((g) => {
+                const hasItem = g.items.some((it) => it.id === id);
+                if (!hasItem) {
+                    return g;
+                }
+
+                const updatedItems = g.items.map((it) => {
+                    if (it.id === id) {
+                        nextSelected = !it.selected;
+                        return { ...it, selected: nextSelected };
+                    }
+                    return it;
+                });
+
+                return recalculateGroup({
+                    ...g,
+                    items: updatedItems,
+                });
+            }),
         );
 
         router.patch(
@@ -171,30 +299,41 @@ export default function Cart({
     };
 
     const handleQuantityChange = (id: number, type: 'inc' | 'dec') => {
-        const item = cartItems.find((i) => i.id === id);
+        let nextQty: number | null = null;
 
-        if (!item) {
-            return;
-        }
+        setGroups((prev) =>
+            prev.map((g) => {
+                const item = g.items.find((it) => it.id === id);
+                if (!item) {
+                    return g;
+                }
 
-        let nextQty = Number(item.quantity) || 1;
-        const maxStock = Number(item.stock) || 99;
+                let qty = Number(item.quantity) || 1;
+                const maxStock = Number(item.stock) || 99;
 
-        if (type === 'inc' && nextQty < maxStock) {
-            nextQty += 1;
-        }
+                if (type === 'inc' && qty < maxStock) {
+                    qty += 1;
+                } else if (type === 'dec' && qty > 1) {
+                    qty -= 1;
+                }
 
-        if (type === 'dec' && nextQty > 1) {
-            nextQty -= 1;
-        }
+                if (qty === item.quantity) {
+                    return g;
+                }
+                nextQty = qty;
 
-        if (nextQty !== item.quantity) {
-            setCartItems((prev) =>
-                prev.map((i) =>
-                    i.id === id ? { ...i, quantity: nextQty } : i,
-                ),
-            );
+                const updatedItems = g.items.map((it) =>
+                    it.id === id ? { ...it, quantity: qty } : it,
+                );
 
+                return recalculateGroup({
+                    ...g,
+                    items: updatedItems,
+                });
+            }),
+        );
+
+        if (nextQty !== null) {
             router.patch(
                 `/cart/${id}`,
                 { quantity: nextQty },
@@ -231,14 +370,34 @@ export default function Cart({
     const executeDelete = () => {
         if (deleteModal.type === 'single' && deleteModal.id) {
             const deleteId = deleteModal.id;
-            setCartItems((prev) => prev.filter((item) => item.id !== deleteId));
+            setGroups((prev) =>
+                prev
+                    .map((g) =>
+                        recalculateGroup({
+                            ...g,
+                            items: g.items.filter((it) => it.id !== deleteId),
+                        }),
+                    )
+                    .filter((g) => g.items.length > 0),
+            );
+
             router.delete(`/cart/${deleteId}`, {
                 preserveScroll: true,
                 preserveState: true,
                 showProgress: false,
             });
         } else if (deleteModal.type === 'selected') {
-            setCartItems((prev) => prev.filter((item) => !item.selected));
+            setGroups((prev) =>
+                prev
+                    .map((g) =>
+                        recalculateGroup({
+                            ...g,
+                            items: g.items.filter((it) => !it.selected),
+                        }),
+                    )
+                    .filter((g) => g.items.length > 0),
+            );
+
             router.delete('/cart/selected/delete', {
                 preserveScroll: true,
                 preserveState: true,
@@ -299,7 +458,7 @@ export default function Cart({
                     Keranjang
                 </h1>
 
-                {cartItems.length > 0 ? (
+                {totalCartItemsCount > 0 ? (
                     <div className="flex flex-col items-start gap-8 lg:flex-row">
                         <div className="w-full flex-1 space-y-6">
                             {/* Header Section Pilih Semua & Tombol Hapus */}
@@ -308,6 +467,7 @@ export default function Cart({
                                     <CustomCheckbox
                                         checked={isAllSelected}
                                         onChange={handleSelectAll}
+                                        aria-label="Pilih semua barang di keranjang"
                                     />
                                     <span className="text-sm font-extrabold text-slate-900">
                                         Pilih Semua{' '}
@@ -328,138 +488,17 @@ export default function Cart({
                                 )}
                             </div>
 
+                            {/* Section Toko-Toko Terpisah */}
                             <div className="space-y-4">
-                                {cartItems.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="space-y-5 rounded-md border border-slate-200 bg-white p-5 shadow-xs"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <CustomCheckbox
-                                                checked={!!item.selected}
-                                                onChange={() =>
-                                                    handleToggleItem(item.id)
-                                                }
-                                            />
-                                            <div className="flex items-center gap-2">
-                                                <span className="cursor-pointer text-[13px] font-extrabold text-slate-900 transition hover:text-[#03ac0e]">
-                                                    Official Store
-                                                </span>
-                                                <span className="text-xs text-slate-400">
-                                                    •{' '}
-                                                    {item.city ||
-                                                        'Jakarta Pusat'}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-start gap-4 pl-8">
-                                            <Link
-                                                href={`/products/${item.product_id}`}
-                                                className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50 sm:h-24 sm:w-24"
-                                            >
-                                                <img
-                                                    src={
-                                                        item.image ||
-                                                        'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=200'
-                                                    }
-                                                    alt={item.title || 'Produk'}
-                                                    className="h-full w-full object-cover transition duration-300 hover:scale-105"
-                                                />
-                                                {item.discount ? (
-                                                    <div className="absolute top-0 left-0 rounded-br-md bg-[#ef144a] px-1.5 py-0.5 text-[9.5px] font-black text-white">
-                                                        {item.discount}%
-                                                    </div>
-                                                ) : null}
-                                            </Link>
-
-                                            <div className="min-w-0 flex-1 space-y-1">
-                                                <Link
-                                                    href={`/products/${item.product_id}`}
-                                                    className="line-clamp-2 text-[13px] leading-snug font-semibold text-slate-800 transition hover:text-[#03ac0e] sm:text-sm"
-                                                >
-                                                    {item.title ||
-                                                        'Nama Produk'}
-                                                </Link>
-
-                                                <p className="text-xs text-slate-400">
-                                                    Varian: Default
-                                                </p>
-
-                                                <div className="flex items-baseline gap-2 pt-1">
-                                                    <span className="text-sm font-extrabold text-slate-900 sm:text-base">
-                                                        {formatRupiah(
-                                                            item.price,
-                                                        )}
-                                                    </span>
-                                                    {item.original_price ? (
-                                                        <span className="text-xs text-slate-400 line-through">
-                                                            {formatRupiah(
-                                                                item.original_price,
-                                                            )}
-                                                        </span>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-end gap-4 border-t border-slate-100 pt-3 pl-8">
-                                            <button
-                                                type="button"
-                                                aria-label="Hapus barang"
-                                                onClick={() =>
-                                                    confirmDeleteSingle(item.id)
-                                                }
-                                                className="cursor-pointer p-1 text-slate-400 transition hover:text-[#ef144a]"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-
-                                            <div className="flex items-center rounded-md border border-slate-300 bg-white p-0.5">
-                                                <button
-                                                    type="button"
-                                                    aria-label="Kurangi kuantitas"
-                                                    onClick={() =>
-                                                        handleQuantityChange(
-                                                            item.id,
-                                                            'dec',
-                                                        )
-                                                    }
-                                                    disabled={
-                                                        (Number(
-                                                            item.quantity,
-                                                        ) || 1) <= 1
-                                                    }
-                                                    className="cursor-pointer p-1 text-slate-400 transition hover:text-[#03ac0e] disabled:opacity-30"
-                                                >
-                                                    <Minus size={14} />
-                                                </button>
-                                                <span className="w-10 text-center text-xs font-bold text-slate-900">
-                                                    {item.quantity || 1}
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    aria-label="Tambah kuantitas"
-                                                    onClick={() =>
-                                                        handleQuantityChange(
-                                                            item.id,
-                                                            'inc',
-                                                        )
-                                                    }
-                                                    disabled={
-                                                        (Number(
-                                                            item.quantity,
-                                                        ) || 1) >=
-                                                        (Number(item.stock) ||
-                                                            99)
-                                                    }
-                                                    className="cursor-pointer p-1 text-[#03ac0e] transition hover:text-emerald-700 disabled:opacity-30"
-                                                >
-                                                    <Plus size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                {groups.map((group) => (
+                                    <StoreCartSection
+                                        key={group.store.id}
+                                        group={group}
+                                        onToggleStore={handleToggleStore}
+                                        onToggleItem={handleToggleItem}
+                                        onQuantityChange={handleQuantityChange}
+                                        onDeleteSingle={confirmDeleteSingle}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -499,6 +538,7 @@ export default function Cart({
                                 <button
                                     type="button"
                                     disabled={totalSelectedItems === 0}
+                                    onClick={() => router.visit('/checkout')}
                                     className="w-full cursor-pointer rounded-md bg-[#03ac0e] py-3 text-sm font-black text-white shadow-xs transition hover:bg-[#029b0c] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
                                 >
                                     Beli{' '}

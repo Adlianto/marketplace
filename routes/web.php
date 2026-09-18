@@ -28,6 +28,7 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
 Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/toggle-all', [CartController::class, 'toggleAll'])->name('cart.toggleAll');
+Route::post('/cart/toggle-store', [CartController::class, 'toggleStore'])->name('cart.toggleStore');
 Route::delete('/cart/selected/delete', [CartController::class, 'destroySelected'])->name('cart.destroySelected');
 Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
 

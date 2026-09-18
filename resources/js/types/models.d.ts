@@ -131,6 +131,7 @@ export interface CartItem {
     id: number;
     user_id?: number | null;
     product_id: number;
+    product_sku_id?: number | null;
     title?: string;
     slug?: string;
     price?: number | string;
@@ -139,11 +140,101 @@ export interface CartItem {
     image?: string;
     stock?: number;
     city?: string;
+    sku_combination?: string | null;
+    weight_gram?: number;
     quantity: number;
     selected?: boolean;
+    store_id?: number | null;
     product?: Product;
+    sku?: ProductSku | null;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface StoreCartGroup {
+    store: {
+        id: number;
+        name: string;
+        slug: string;
+        city: string;
+        is_official: boolean;
+        power_merchant: boolean;
+        logo?: string | null;
+    };
+    items: CartItem[];
+    subtotal: number;
+    total_weight_gram: number;
+    selected_subtotal: number;
+    selected_weight_gram: number;
+    selected_count: number;
+    total_items: number;
+    is_all_selected: boolean;
+}
+
+export interface SubOrderItem {
+    id: number;
+    sub_order_id: number;
+    product_id: number;
+    product_sku_id?: number | null;
+    product_title: string;
+    sku_combination?: string | null;
+    price: number | string;
+    quantity: number;
+    total_price: number | string;
+    weight_gram: number;
+    created_at?: string;
+    updated_at?: string;
+    product?: Product;
+    productSku?: ProductSku | null;
+    sku?: ProductSku | null;
+}
+
+export interface SubOrder {
+    id: number;
+    order_group_id: number;
+    store_id: number;
+    user_id: number;
+    address_id: number;
+    sub_order_number: string;
+    courier_name: string;
+    courier_service: string;
+    tracking_number?: string | null;
+    items_subtotal: number | string;
+    shipping_cost: number | string;
+    total_amount: number | string;
+    status:
+        | 'waiting_payment'
+        | 'paid'
+        | 'processing'
+        | 'shipped'
+        | 'delivered'
+        | 'completed'
+        | 'cancelled'
+        | string;
+    shipped_at?: string | null;
+    delivered_at?: string | null;
+    completed_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    orderGroup?: OrderGroup;
+    store?: Store;
+    user?: User;
+    address?: Address;
+    items?: SubOrderItem[];
+}
+
+export interface OrderGroup {
+    id: number;
+    group_code: string;
+    user_id: number;
+    total_amount: number | string;
+    payment_status: 'pending' | 'paid' | 'expired' | 'failed' | string;
+    snap_token?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    user?: User;
+    subOrders?: SubOrder[];
+    sub_orders?: SubOrder[];
 }
 
 export interface Address {

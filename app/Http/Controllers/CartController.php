@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Product;
+use App\Services\Cart\CartGroupingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,35 +13,21 @@ use Inertia\Response;
 
 class CartController extends Controller
 {
+    public function __construct(
+        protected CartGroupingService $cartGroupingService
+    ) {}
+
     public function index(): Response
     {
         $userId = Auth::id();
 
-        $carts = Cart::with('product')
-            ->when($userId, fn ($q) => $q->where('user_id', $userId))
-            ->latest()
-            ->get();
-
-        $cartItems = $carts->map(function ($cart) {
-            return [
-                'id' => $cart->id,
-                'product_id' => $cart->product->id,
-                'title' => $cart->product->title,
-                'slug' => $cart->product->slug ?? '',
-                'price' => (float) $cart->product->price,
-                'original_price' => (float) $cart->product->original_price,
-                'discount' => $cart->product->discount,
-                'image' => $cart->product->image,
-                'stock' => $cart->product->stock ?? 100,
-                'city' => $cart->product->city ?? 'Jakarta Pusat',
-                'quantity' => $cart->quantity,
-                'selected' => (bool) $cart->selected,
-            ];
-        });
+        $storeGroups = $this->cartGroupingService->getGroupedCart($userId);
+        $cartItems = collect($storeGroups)->flatMap(fn (array $group) => $group['items'])->values()->all();
 
         $recommendations = Product::inRandomOrder()->take(18)->get();
 
         return Inertia::render('product/cart', [
+            'storeGroups' => $storeGroups,
             'cartItems' => $cartItems,
             'recommendations' => $recommendations,
         ]);
@@ -105,6 +92,30 @@ class CartController extends Controller
         $selected = (bool) $request->selected;
 
         Cart::when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->update(['selected' => $selected]);
+
+        return back();
+    }
+
+    public function toggleStore(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'store_id' => 'nullable',
+            'selected' => 'required|boolean',
+        ]);
+
+        $userId = Auth::id();
+        $storeId = $request->input('store_id');
+        $selected = (bool) $request->input('selected');
+
+        Cart::when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->whereHas('product', function ($q) use ($storeId) {
+                if ($storeId === null || $storeId === 0 || $storeId === '0') {
+                    $q->whereNull('store_id')->orWhere('store_id', 0);
+                } else {
+                    $q->where('store_id', (int) $storeId);
+                }
+            })
             ->update(['selected' => $selected]);
 
         return back();

@@ -30,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read User $user
  * @property-read Collection<int, Product> $products
+ * @property-read Collection<int, SubOrder> $subOrders
  */
 class Store extends Model
 {
@@ -87,5 +88,13 @@ class Store extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /**
+     * @return HasMany<SubOrder, $this>
+     */
+    public function subOrders(): HasMany
+    {
+        return $this->hasMany(SubOrder::class);
     }
 }

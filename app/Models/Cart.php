@@ -55,6 +55,14 @@ class Cart extends Model
         return $this->belongsTo(ProductSku::class, 'product_sku_id');
     }
 
+    /**
+     * @return BelongsTo<ProductSku, $this>
+     */
+    public function productSku(): BelongsTo
+    {
+        return $this->sku();
+    }
+
     // Relasi opsional ke Model User
     /**
      * @return BelongsTo<User, $this>
