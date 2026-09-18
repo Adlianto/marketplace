@@ -11,7 +11,7 @@ class ProductController extends Controller
     public function show(int|string $id): Response
     {
         /** @var Product $product */
-        $product = Product::with(['specifications', 'reviews'])->findOrFail($id);
+        $product = Product::with(['specifications', 'reviews', 'variants.options', 'skus', 'store'])->findOrFail($id);
 
         $avgRating = $product->reviews->avg('rating') ?? 0;
         $product->rating_avg = round((float) $avgRating, 1);

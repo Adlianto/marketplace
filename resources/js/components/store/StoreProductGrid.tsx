@@ -8,6 +8,7 @@ interface StoreProductGridProps {
 
 const formatRupiah = (val: number | string) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
+
     return new Intl.NumberFormat('id-ID').format(num || 0);
 };
 

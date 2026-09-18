@@ -8,9 +8,7 @@ import {
     Settings,
     ExternalLink,
     Plus,
-    AlertCircle,
     CheckCircle2,
-    Clock,
 } from 'lucide-react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
@@ -29,6 +27,7 @@ interface SellerDashboardProps {
 
 const formatRupiah = (val: number | string) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
+
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',

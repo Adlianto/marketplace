@@ -5,9 +5,7 @@ import {
     ArrowLeft,
     CheckCircle2,
     Save,
-    Image as ImageIcon,
     Compass,
-    Power,
 } from 'lucide-react';
 import type { FormEventHandler } from 'react';
 import Footer from '@/components/footer';

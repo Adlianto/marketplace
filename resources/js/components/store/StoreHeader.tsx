@@ -7,7 +7,6 @@ import {
     Package,
     Share2,
     MessageCircle,
-    Calendar,
 } from 'lucide-react';
 import type { Store } from '@/types';
 

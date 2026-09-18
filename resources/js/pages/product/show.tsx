@@ -16,10 +16,12 @@ import {
     ChevronRight,
     MoreHorizontal,
 } from 'lucide-react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
+import SkuStockNotice from '@/components/product/SkuStockNotice';
+import VariantSelector from '@/components/product/VariantSelector';
 import ProductSkeleton from '@/components/productSkeleton';
 import type { Product } from '@/types';
 
@@ -67,15 +69,38 @@ function LazySection({
     );
 }
 
+function getInitialVariantOptions(product: Product): Record<string, string> {
+    if (
+        product?.has_variants &&
+        product.variants &&
+        product.variants.length > 0 &&
+        product.skus &&
+        product.skus.length > 0
+    ) {
+        const defaultSku =
+            product.skus.find((s) => s.stock > 0) || product.skus[0];
+
+        if (defaultSku) {
+            const parts = defaultSku.combination_key.split('-');
+            const initial: Record<string, string> = {};
+            product.variants.forEach((v, index) => {
+                if (parts[index]) {
+                    initial[v.name] = parts[index];
+                }
+            });
+
+            return initial;
+        }
+    }
+
+    return {};
+}
+
 export default function ProductShow({
     product,
     relatedProducts,
 }: ProductShowProps) {
-    const productImage =
-        product?.image ||
-        'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80';
-
-    const [activeImage, setActiveImage] = useState(productImage);
+    const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
     const [modalData, setModalData] = useState<{
         images: string[];
         index: number;
@@ -88,6 +113,62 @@ export default function ProductShow({
     );
     const [isCopiedMain, setIsCopiedMain] = useState(false);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+    const hasVariants = Boolean(
+        product?.has_variants &&
+        product.variants &&
+        product.variants.length > 0 &&
+        product.skus &&
+        product.skus.length > 0,
+    );
+
+    const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() =>
+        getInitialVariantOptions(product),
+    );
+
+    const [prevProductId, setPrevProductId] = useState(product?.id);
+
+    if (product?.id !== prevProductId) {
+        setPrevProductId(product?.id);
+        setSelectedOptions(getInitialVariantOptions(product));
+        setSelectedThumbnail(null);
+    }
+
+    const handleSelectOption = (variantName: string, optionValue: string) => {
+        setSelectedOptions((prev) => ({
+            ...prev,
+            [variantName]: optionValue,
+        }));
+        setSelectedThumbnail(null);
+    };
+
+    const isSelectionComplete = useMemo(() => {
+        if (!hasVariants) {
+            return true;
+        }
+
+        return product.variants!.every((v) => Boolean(selectedOptions[v.name]));
+    }, [hasVariants, product.variants, selectedOptions]);
+
+    const activeSku = useMemo(() => {
+        if (!hasVariants || !isSelectionComplete || !product.skus) {
+            return null;
+        }
+
+        const key = product.variants!.map((v) => selectedOptions[v.name]).join('-');
+
+        return (
+            product.skus.find(
+                (s) => s.combination_key.toLowerCase() === key.toLowerCase(),
+            ) ?? null
+        );
+    }, [hasVariants, isSelectionComplete, product.variants, product.skus, selectedOptions]);
+
+    const activeImage =
+        selectedThumbnail ||
+        activeSku?.image ||
+        product?.image ||
+        'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80';
 
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -136,13 +217,9 @@ export default function ProductShow({
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setActiveImage(
-            product?.image ||
-                'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80',
-        );
-    }, [product]);
+    const productImage =
+        product?.image ||
+        'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600&auto=format&fit=crop&q=80';
 
     useEffect(() => {
         if (modalData) {
@@ -160,8 +237,7 @@ export default function ProductShow({
         const element = document.getElementById(id);
 
         if (element) {
-            const y =
-                element.getBoundingClientRect().top + window.scrollY - 120;
+            const y = element.getBoundingClientRect().top + window.scrollY - 120;
             window.scrollTo({ top: y, behavior: 'smooth' });
         }
     };
@@ -172,10 +248,7 @@ export default function ProductShow({
             prev
                 ? {
                       ...prev,
-                      index:
-                          prev.index === 0
-                              ? prev.images.length - 1
-                              : prev.index - 1,
+                      index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1,
                   }
                 : null,
         );
@@ -187,16 +260,26 @@ export default function ProductShow({
             prev
                 ? {
                       ...prev,
-                      index:
-                          prev.index === prev.images.length - 1
-                              ? 0
-                              : prev.index + 1,
+                      index: prev.index === prev.images.length - 1 ? 0 : prev.index + 1,
                   }
                 : null,
         );
     };
 
-    const stock = product?.stock ?? 143;
+    const currentPrice = activeSku ? Number(activeSku.price) : Number(product?.price || 0);
+    const currentOriginalPrice = activeSku?.original_price
+        ? Number(activeSku.original_price)
+        : product?.original_price
+          ? Number(product.original_price)
+          : null;
+
+    const rawStock = hasVariants
+        ? (activeSku ? activeSku.stock : 0)
+        : (product?.stock ?? 143);
+    const stock = Math.max(0, rawStock);
+
+    const effectiveQuantity = stock <= 0 ? 0 : Math.min(Math.max(1, quantity), stock);
+
     const sold = product?.sold_count ?? 40;
     const ratingDisplay = product?.rating_avg ?? product?.rating ?? 5.0;
     const reviewsCount =
@@ -204,6 +287,7 @@ export default function ProductShow({
 
     const formatRupiah = (val: number | string) => {
         const num = typeof val === 'string' ? parseFloat(val) : Number(val);
+
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -212,25 +296,57 @@ export default function ProductShow({
     };
 
     const handleQuantityChange = (type: 'inc' | 'dec') => {
-        if (type === 'inc' && quantity < stock) {
-            setQuantity(quantity + 1);
-        } else if (type === 'dec' && quantity > 1) {
-            setQuantity(quantity - 1);
+        if (stock <= 0) {
+            return;
+        }
+
+        if (type === 'inc') {
+            setQuantity((prev) => Math.min(stock, prev + 1));
+        } else if (type === 'dec') {
+            setQuantity((prev) => Math.max(1, Math.min(stock, prev - 1)));
         }
     };
 
     const handleAddMainToCart = () => {
+        if (!isSelectionComplete || stock <= 0) {
+            return;
+        }
+
         setIsAddingToCart(true);
         router.post(
             '/cart',
             {
                 product_id: product.id,
-                quantity: quantity,
+                product_sku_id: activeSku?.id ?? null,
+                quantity: Math.max(1, effectiveQuantity),
             },
             {
                 preserveScroll: true,
                 preserveState: true,
                 showProgress: false,
+                onFinish: () => setIsAddingToCart(false),
+            },
+        );
+    };
+
+    const handleBuyNow = () => {
+        if (!isSelectionComplete || stock <= 0) {
+            return;
+        }
+
+        setIsAddingToCart(true);
+        router.post(
+            '/cart',
+            {
+                product_id: product.id,
+                product_sku_id: activeSku?.id ?? null,
+                quantity: Math.max(1, effectiveQuantity),
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.visit('/cart');
+                },
                 onFinish: () => setIsAddingToCart(false),
             },
         );
@@ -395,7 +511,7 @@ export default function ProductShow({
                                     {galleryImages.map((img, i) => (
                                         <div
                                             key={i}
-                                            onClick={() => setActiveImage(img)}
+                                            onClick={() => setSelectedThumbnail(img)}
                                             className={`h-16 w-16 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 p-0.5 transition-all duration-200 ${
                                                 activeImage === img
                                                     ? 'border-[#03ac0e] opacity-100'
@@ -446,9 +562,36 @@ export default function ProductShow({
                                     </div>
                                 </div>
 
-                                <div className="text-3xl font-extrabold text-slate-900">
-                                    {formatRupiah(product?.price || 0)}
+                                <div className="space-y-1">
+                                    <div className="text-3xl font-extrabold text-slate-900">
+                                        {formatRupiah(currentPrice)}
+                                    </div>
+                                    {currentOriginalPrice && currentOriginalPrice > currentPrice && (
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className="rounded bg-rose-100 px-1.5 py-0.5 font-bold text-rose-600">
+                                                {Math.round(
+                                                    ((currentOriginalPrice - currentPrice) /
+                                                        currentOriginalPrice) *
+                                                        100,
+                                                )}
+                                                %
+                                            </span>
+                                            <span className="text-slate-400 line-through">
+                                                {formatRupiah(currentOriginalPrice)}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Multi-Dimension Variant Selector UI */}
+                                {hasVariants && product.variants && product.skus && (
+                                    <VariantSelector
+                                        variants={product.variants}
+                                        skus={product.skus}
+                                        selectedOptions={selectedOptions}
+                                        onSelectOption={handleSelectOption}
+                                    />
+                                )}
 
                                 <div className="flex gap-6 border-b border-slate-200 text-[13px] font-bold">
                                     <button
@@ -774,25 +917,35 @@ export default function ProductShow({
                                 Atur jumlah dan catatan
                             </h3>
 
+                            {/* Ringkasan varian terpilih */}
+                            {hasVariants && activeSku && (
+                                <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs">
+                                    <span className="text-slate-500">Varian:</span>
+                                    <span className="font-bold text-slate-900">
+                                        {activeSku.combination_key}
+                                    </span>
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-3">
                                 <div className="flex w-fit items-center rounded-lg border border-slate-300 p-1">
                                     <button
                                         onClick={() =>
                                             handleQuantityChange('dec')
                                         }
-                                        disabled={quantity <= 1}
+                                        disabled={effectiveQuantity <= 1 || stock <= 0}
                                         className="cursor-pointer p-1 text-slate-500 transition hover:text-[#03ac0e] disabled:opacity-30"
                                     >
                                         <Minus size={16} />
                                     </button>
                                     <span className="w-12 text-center text-sm font-bold text-slate-900">
-                                        {quantity}
+                                        {effectiveQuantity}
                                     </span>
                                     <button
                                         onClick={() =>
                                             handleQuantityChange('inc')
                                         }
-                                        disabled={quantity >= stock}
+                                        disabled={effectiveQuantity >= stock || stock <= 0}
                                         className="cursor-pointer p-1 text-[#03ac0e] transition hover:text-emerald-700 disabled:opacity-30"
                                     >
                                         <Plus size={16} />
@@ -806,34 +959,57 @@ export default function ProductShow({
                                 </span>
                             </div>
 
+                            {/* Peringatan stok sisa / habis */}
+                            <SkuStockNotice
+                                stock={stock}
+                                isVariantProduct={hasVariants}
+                                isSelectionComplete={isSelectionComplete}
+                            />
+
                             <div className="flex items-center justify-between pt-2 text-[13px]">
                                 <span className="text-slate-500">Subtotal</span>
                                 <span className="text-lg font-extrabold text-slate-900">
                                     {formatRupiah(
-                                        Number(product?.price || 0) * quantity,
+                                        currentPrice * effectiveQuantity,
                                     )}
                                 </span>
                             </div>
 
                             <div className="space-y-2.5 pt-2">
-                                {/* Tombol Tambah ke Keranjang Database */}
+                                {/* Tombol Tambah ke Keranjang */}
                                 <button
+                                    type="button"
                                     onClick={handleAddMainToCart}
-                                    disabled={isAddingToCart}
-                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#03ac0e] py-2.5 text-[13px] font-extrabold text-white shadow-sm transition hover:bg-[#029b0c] disabled:opacity-50"
+                                    disabled={
+                                        isAddingToCart ||
+                                        !isSelectionComplete ||
+                                        stock <= 0
+                                    }
+                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#03ac0e] py-2.5 text-[13px] font-extrabold text-white shadow-sm transition hover:bg-[#029b0c] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <Plus size={16} strokeWidth={3} />{' '}
                                     {isAddingToCart
                                         ? 'Menambahkan...'
-                                        : 'Keranjang'}
+                                        : stock <= 0
+                                          ? 'Stok Habis'
+                                          : !isSelectionComplete
+                                            ? 'Pilih Varian'
+                                            : 'Keranjang'}
                                 </button>
-                                <Link
-                                    href="/cart"
-                                    onClick={handleAddMainToCart}
-                                    className="flex w-full cursor-pointer items-center justify-center rounded-lg border border-[#03ac0e] py-2.5 text-[13px] font-extrabold text-[#03ac0e] transition hover:bg-emerald-50"
+
+                                {/* Tombol Beli Langsung */}
+                                <button
+                                    type="button"
+                                    onClick={handleBuyNow}
+                                    disabled={
+                                        isAddingToCart ||
+                                        !isSelectionComplete ||
+                                        stock <= 0
+                                    }
+                                    className="flex w-full cursor-pointer items-center justify-center rounded-lg border border-[#03ac0e] py-2.5 text-[13px] font-extrabold text-[#03ac0e] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 disabled:hover:bg-transparent"
                                 >
                                     Beli Langsung
-                                </Link>
+                                </button>
                             </div>
 
                             <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[13px] font-bold text-slate-600">

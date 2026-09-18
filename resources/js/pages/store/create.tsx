@@ -1,8 +1,8 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Store, MapPin, Building2, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Store, MapPin, Building2, CheckCircle2, ArrowRight } from 'lucide-react';
 import type { FormEventHandler } from 'react';
-import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
+import Navbar from '@/components/navbar';
 
 export default function StoreCreate() {
     const { data, setData, post, processing, errors } = useForm({

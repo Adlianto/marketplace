@@ -83,6 +83,7 @@ export default function CheckoutPage({ items, addresses, summary }: CheckoutProp
                                 <div className="space-y-3">
                                     {addresses.map((addr) => {
                                         const isSelected = data.address_id === addr.id;
+
                                         return (
                                             <label
                                                 key={addr.id}

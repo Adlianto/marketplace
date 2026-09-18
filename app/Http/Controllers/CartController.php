@@ -50,14 +50,17 @@ class CartController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
+            'product_sku_id' => 'nullable|exists:product_skus,id',
             'quantity' => 'nullable|integer|min:1',
         ]);
 
         $userId = Auth::id();
         $qty = (int) ($request->quantity ?? 1);
+        $skuId = $request->product_sku_id;
 
         /** @var Cart|null $cart */
         $cart = Cart::where('product_id', $request->product_id)
+            ->where('product_sku_id', $skuId)
             ->when($userId, fn ($q) => $q->where('user_id', $userId))
             ->first();
 
@@ -67,6 +70,7 @@ class CartController extends Controller
             Cart::create([
                 'user_id' => $userId,
                 'product_id' => $request->product_id,
+                'product_sku_id' => $skuId,
                 'quantity' => $qty,
                 'selected' => true,
             ]);

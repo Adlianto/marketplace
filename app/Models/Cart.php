@@ -11,9 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int|null $user_id
  * @property int $product_id
+ * @property int|null $product_sku_id
  * @property int $quantity
  * @property bool $selected
  * @property-read Product $product
+ * @property-read ProductSku|null $sku
  * @property-read User|null $user
  */
 class Cart extends Model
@@ -25,6 +27,7 @@ class Cart extends Model
     protected $fillable = [
         'user_id',
         'product_id',
+        'product_sku_id',
         'quantity',
         'selected',
     ];
@@ -42,6 +45,14 @@ class Cart extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * @return BelongsTo<ProductSku, $this>
+     */
+    public function sku(): BelongsTo
+    {
+        return $this->belongsTo(ProductSku::class, 'product_sku_id');
     }
 
     // Relasi opsional ke Model User
