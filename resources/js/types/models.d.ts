@@ -171,6 +171,22 @@ export interface StoreCartGroup {
     is_all_selected: boolean;
 }
 
+export interface CourierOption {
+    courier_name: string;
+    courier_service: string;
+    label: string;
+    service_name: string;
+    description: string;
+    base_rate: number;
+    instant?: boolean;
+}
+
+export interface StoreShippingState {
+    courier_name: string;
+    courier_service: string;
+    shipping_cost: number;
+}
+
 export interface SubOrderItem {
     id: number;
     sub_order_id: number;

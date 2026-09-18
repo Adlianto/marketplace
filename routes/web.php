@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route Checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'process'])->middleware('throttle:10,1')->name('checkout.process');
+    Route::post('/checkout/multi', [CheckoutController::class, 'processMulti'])->middleware('throttle:10,1')->name('checkout.processMulti');
 
     // Route Buka Toko (Merchant Onboarding)
     Route::get('/store/create', [StoreController::class, 'create'])->name('store.create');

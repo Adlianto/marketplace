@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Checkout\ProcessCheckoutAction;
+use App\Actions\Checkout\ProcessMultiStoreCheckoutAction;
 use App\Http\Requests\Checkout\ProcessCheckoutRequest;
+use App\Http\Requests\Checkout\ProcessMultiCheckoutRequest;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\User;
+use App\Services\Cart\CartGroupingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -14,6 +17,10 @@ use Inertia\Response;
 
 class CheckoutController extends Controller
 {
+    public function __construct(
+        protected CartGroupingService $cartGroupingService
+    ) {}
+
     /**
      * Tampilkan halaman ringkasan checkout.
      */
@@ -22,7 +29,7 @@ class CheckoutController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        $selectedCarts = Cart::with('product')
+        $selectedCarts = Cart::with(['product.store', 'sku'])
             ->where('user_id', $user->id)
             ->where('selected', true)
             ->get();
@@ -37,11 +44,14 @@ class CheckoutController extends Controller
             ->get();
 
         $itemsSubtotal = $selectedCarts->sum(function (Cart $item): int {
-            return (int) $item->product->price * $item->quantity;
+            return (int) ($item->sku?->price ?? $item->product->price) * $item->quantity;
         });
+
+        $storeGroups = $this->cartGroupingService->groupCarts($selectedCarts);
 
         return Inertia::render('checkout/checkoutPage', [
             'items' => $selectedCarts,
+            'storeGroups' => $storeGroups,
             'addresses' => $addresses,
             'summary' => [
                 'subtotal' => $itemsSubtotal,
@@ -69,5 +79,19 @@ class CheckoutController extends Controller
         );
 
         return redirect()->route('dashboard')->with('success', "Pesanan #{$order->order_number} berhasil dibuat!");
+    }
+
+    /**
+     * Proses checkout multi-toko (Thin Controller — delegasi ke Action).
+     */
+    public function processMulti(
+        ProcessMultiCheckoutRequest $request,
+        ProcessMultiStoreCheckoutAction $action,
+    ): RedirectResponse {
+        /** @var User $user */
+        $user = $request->user();
+        $orderGroup = $action->execute($user, $request->validated());
+
+        return redirect()->route('dashboard')->with('success', "Grup Pesanan #{$orderGroup->group_code} berhasil dibuat!");
     }
 }
