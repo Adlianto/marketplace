@@ -3,6 +3,7 @@
 namespace App\Actions\Store;
 
 use App\Models\Store;
+use App\Models\StoreWallet;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -36,6 +37,12 @@ class OpenStoreAction
                 'is_official' => false,
                 'power_merchant' => false,
             ]);
+
+            // Otomatis inisialisasi dompet toko dengan saldo 0
+            StoreWallet::firstOrCreate(
+                ['store_id' => $store->id],
+                ['balance' => 0]
+            );
 
             return $store;
         });

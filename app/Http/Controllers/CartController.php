@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\ProductSku;
 use App\Services\Cart\CartGroupingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,7 +44,7 @@ class CartController extends Controller
 
         $userId = Auth::id();
         $qty = (int) ($request->quantity ?? 1);
-        $skuId = $request->product_sku_id;
+        $skuId = $request->product_sku_id ?? ProductSku::where('product_id', $request->product_id)->value('id');
 
         /** @var Cart|null $cart */
         $cart = Cart::where('product_id', $request->product_id)
